@@ -1,0 +1,32 @@
+/* Tailwind Layers */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Variables y base */
+@layer base {
+  :root {
+    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif,
+      'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+  }
+
+  body {
+    font-family: var(--font-sans);
+  }
+}
+
+/* Componentes personalizados */
+@layer components {
+  .btn-header {
+    @apply inline-flex items-center px-3 py-1.5 rounded-full bg-gray-100 text-gray-700 text-sm font-semibold hover:bg-gray-200 transition-colors;
+    gap: 0.5rem; /* reemplaza el gap-2 */
+  }
+
+  .btn-success-lg {
+    @apply w-full py-3 px-4 rounded-lg bg-green-600 text-white font-bold hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors;
+  }
+
+  .btn-warning-lg {
+    @apply w-full py-3 px-4 rounded-lg bg-yellow-500 text-white font-bold hover:bg-yellow-600 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors;
+  }
+}

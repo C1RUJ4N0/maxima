@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: laravel-pos-app
+    container_name: laravel-pos-app
+    restart: unless-stopped
+    volumes:
+      - .:/var/www/html
+    ports:
+      - "8000:80"
+    networks:
+      - pos-network
+    depends_on:
+      - db
+      - mailpit
+    command: php artisan serve --host=0.0.0.0 --port=80
+
+  db:
+    image: mysql:8.0
+    container_name: laravel-pos-db
+    restart: unless-stopped
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_DATABASE: laravel_pos
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_USER: laraveluser
+      MYSQL_PASSWORD: password
+    volumes:
+      - pos-db-data:/var/lib/mysql
+    networks:
+      - pos-network
+
+  mailpit:
+    image: axllent/mailpit
+    container_name: mailpit
+    restart: unless-stopped
+    ports:
+      - "1025:1025"   # SMTP
+      - "8025:8025"   # Web UI
+    networks:
+      - pos-network
+
+networks:
+  pos-network:
+    driver: bridge
+
+volumes:
+  pos-db-data:
+    driver: local

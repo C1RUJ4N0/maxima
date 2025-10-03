@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Escáner USB</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #1a202c;
+            color: #e2e8f0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 1.5rem;
+        }
+        .container {
+            width: 100%;
+            max-width: 600px;
+            background-color: #2d3748;
+            border-radius: 1rem;
+            padding: 2rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        #interactive.viewport {
+            position: relative;
+            width: 100%;
+            height: 300px;
+        }
+        #interactive.viewport canvas,
+        #interactive.viewport video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border-radius: 0.75rem;
+        }
+        #interactive.viewport .drawingBuffer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 10;
+        }
+        #result-list {
+            list-style: none;
+            padding: 0;
+            margin-top: 1rem;
+        }
+        #result-list li {
+            background-color: #4a5568;
+            margin-bottom: 0.5rem;
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .text-sm-semibold {
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+        .loader {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid #fff;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-100">
+
+    <div class="container mx-auto mt-8 p-6 bg-gray-800 rounded-2xl shadow-lg">
+        <h1 class="text-3xl font-bold text-center mb-6 text-white">Escáner de Código de Barras</h1>
+        
+        <div id="camera-selector" class="mb-4 hidden">
+            <label for="cameras" class="block text-sm font-medium mb-1 text-gray-400">Seleccionar cámara:</label>
+            <select id="cameras" class="w-full p-2 bg-gray-700 rounded-md border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"></select>
+        </div>
+
+        <div id="loading" class="text-center p-4">
+            <div class="loader mx-auto mb-4"></div>
+            <p>Buscando cámaras disponibles...</p>
+        </div>
+
+        <div id="scanner-container" class="relative rounded-xl overflow-hidden shadow-md hidden">
+            <div id="interactive" class="viewport"></div>
+            <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <div class="w-3/4 h-24 border-y-2 border-green-500 z-10"></div>
+                <div class="absolute w-full h-px bg-green-500 animate-pulse"></div>
+            </div>
+        </div>
+
+        <div id="error-message" class="text-center text-red-500 mt-4 hidden">
+            No se pudo iniciar la cámara. Asegúrate de otorgar los permisos necesarios.
+        </div>
+
+        <div id="dashboard" class="mt-8 hidden">
+            <h2 class="text-xl font-semibold mb-4 text-center text-white">Productos Agregados</h2>
+            <ul id="result-list" class="space-y-3">
+                <!-- Los productos escaneados aparecerán aquí -->
+            </ul>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/quagga@0.12.1/dist/quagga.min.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const loading = document.getElementById('loading');
+            const scannerContainer = document.getElementById('scanner-container');
+            const errorMessage = document.getElementById('error-message');
+            const dashboard = document.getElementById('dashboard');
+            const resultList = document.getElementById('result-list');
+            const cameraSelector = document.getElementById('camera-selector');
+            const cameraDropdown = document.getElementById('cameras');
+            const scannedCodes = {};
+            let isScanning = false;
+
+            // Función para iniciar el escáner con un ID de dispositivo específico
+            function startScanner(deviceId) {
+                if (isScanning) {
+                    Quagga.stop();
+                    isScanning = false;
+                }
+                
+                Quagga.init({
+                    inputStream: {
+                        name: "Live",
+                        type: "LiveStream",
+                        target: document.querySelector('#interactive'),
+                        constraints: {
+                            deviceId: deviceId ? deviceId : undefined // Usar el ID del dispositivo si está definido
+                        }
+                    },
+                    decoder: {
+                        readers: ["ean_reader", "ean_8_reader", "upc_reader", "upc_e_reader", "code_128_reader", "code_39_reader"]
+                    }
+                }, function(err) {
+                    if (err) {
+                        console.error("Error al iniciar Quagga:", err);
+                        loading.style.display = 'none';
+                        scannerContainer.style.display = 'none';
+                        dashboard.style.display = 'none';
+                        errorMessage.style.display = 'block';
+                        return;
+                    }
+                    console.log("Quagga iniciado con éxito.");
+                    loading.style.display = 'none';
+                    scannerContainer.style.display = 'block';
+                    dashboard.style.display = 'block';
+                    isScanning = true;
+                    Quagga.start();
+                });
+            }
+
+            // Escuchar cambios en la selección de la cámara
+            cameraDropdown.addEventListener('change', (event) => {
+                const deviceId = event.target.value;
+                startScanner(deviceId);
+            });
+            
+            // Función para obtener y listar las cámaras disponibles
+            async function listCameras() {
+                try {
+                    // Pedir permiso para acceder a los dispositivos de medios
+                    await navigator.mediaDevices.getUserMedia({ video: true });
+                    const devices = await navigator.mediaDevices.enumerateDevices();
+                    const videoDevices = devices.filter(device => device.kind === 'videoinput');
+
+                    if (videoDevices.length > 0) {
+                        cameraSelector.style.display = 'block';
+                        videoDevices.forEach(device => {
+                            const option = document.createElement('option');
+                            option.value = device.deviceId;
+                            option.text = device.label || `Cámara ${cameraDropdown.length + 1}`;
+                            cameraDropdown.appendChild(option);
+                        });
+                        // Iniciar con la primera cámara por defecto
+                        startScanner(videoDevices[0].deviceId);
+                    } else {
+                        // No se encontraron cámaras
+                        loading.style.display = 'none';
+                        errorMessage.style.display = 'block';
+                        errorMessage.textContent = 'No se encontraron cámaras disponibles.';
+                    }
+                } catch (err) {
+                    console.error("Error al acceder a los dispositivos de medios:", err);
+                    loading.style.display = 'none';
+                    errorMessage.style.display = 'block';
+                    errorMessage.textContent = 'No se pudo obtener acceso a la cámara. Por favor, asegúrate de que esté conectada y de que hayas otorgado los permisos necesarios.';
+                }
+            }
+
+            // Escuchador de eventos para cuando se detecta un código
+            Quagga.onDetected(function(result) {
+                const code = result.codeResult.code;
+                
+                // Evita duplicados
+                if (scannedCodes[code]) {
+                    return;
+                }
+                
+                scannedCodes[code] = true;
+                
+                console.log("Código de barras escaneado:", code);
+
+                const li = document.createElement('li');
+                li.className = 'flex justify-between items-center bg-gray-700 p-3 rounded-lg shadow-sm';
+                li.innerHTML = `
+                    <span class="text-sm-semibold text-white">Producto: ${code}</span>
+                    <button class="remove-item text-red-400 hover:text-red-300 font-bold transition-colors">
+                        &times;
+                    </button>
+                `;
+                resultList.appendChild(li);
+
+                li.querySelector('.remove-item').addEventListener('click', () => {
+                    li.remove();
+                    delete scannedCodes[code];
+                });
+
+                // Reiniciar el escáner después de un escaneo exitoso
+                Quagga.stop();
+                isScanning = false;
+                setTimeout(() => {
+                    startScanner(cameraDropdown.value);
+                }, 1000); 
+            });
+
+            // Listar las cámaras disponibles al cargar la página
+            listCameras();
+        });
+    </script>
+</body>
+</html>
