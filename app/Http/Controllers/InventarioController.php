@@ -8,18 +8,27 @@ use Illuminate\Support\Facades\Validator;
 
 class InventarioController extends Controller
 {
+    // Muestra la vista principal del inventario (no cambia)
     public function index()
     {
         return view('inventario.index');
     }
 
-    // MÉTODO NUEVO: Para obtener productos en la API
-    public function apiIndex()
+    // MÉTODO MODIFICADO: Busca productos solo si se envía un parámetro 'q'
+    public function apiIndex(Request $request)
     {
-        return response()->json(['productos' => Producto::all()]);
+        $terminoBusqueda = $request->input('q');
+
+        if ($terminoBusqueda && strlen($terminoBusqueda) > 0) {
+            $productos = Producto::where('nombre', 'like', "%{$terminoBusqueda}%")->get();
+        } else {
+            $productos = collect(); // Devuelve una colección vacía si no hay búsqueda
+        }
+        
+        return response()->json(['productos' => $productos]);
     }
 
-    // MÉTODO NUEVO: Para guardar un producto desde la API
+    // MÉTODO PARA GUARDAR PRODUCTOS: Se mantiene para la funcionalidad de añadir producto
     public function apiStore(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -29,10 +38,10 @@ class InventarioController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return response()->json(['mensaje' => 'Datos inválidos', 'errors' => $validator->errors()], 422);
+            return response()->json(['errors' => $validator->errors()], 422);
         }
 
         $producto = Producto::create($request->all());
-        return response()->json(['producto' => $producto], 201);
+        return response()->json($producto, 201);
     }
 }

@@ -11,11 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // Renombramos la tabla a 'proveedores'
         Schema::create('proveedores', function (Blueprint $table) {
             $table->id();
             $table->string('nombre');
-            $table->string('numero_telefono')->nullable();
+            $table->string('telefono'); // CORRECCIÓN: Se asegura que la columna 'telefono' exista
+            $table->string('email')->nullable();
+            $table->text('descripcion')->nullable();
             $table->timestamps();
         });
     }

@@ -5,14 +5,17 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class ItemApartado extends Model
+class Egreso extends Model
 {
     use HasFactory;
 
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array<int, string>
+     */
     protected $fillable = [
-        'apartado_id',
-        'producto_id',
-        'cantidad',
-        'precio_unitario' // <-- CORRECCIÓN: Campo añadido
+        'descripcion',
+        'monto',
     ];
 }
