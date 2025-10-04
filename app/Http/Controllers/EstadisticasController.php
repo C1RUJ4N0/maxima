@@ -1,43 +1,34 @@
 <?php
-
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use App\Models\Venta;
 use App\Models\Producto;
 use App\Models\Apartado;
+use Carbon\Carbon;
 
 class EstadisticasController extends Controller
 {
-    public function index()
+    // MÉTODO PARA LA API
+    public function apiIndex()
     {
-        $ventasHoy = Venta::whereDate('created_at', today())->sum('monto_total');
-
-        $ventasMes = Venta::whereMonth('created_at', now()->month)
-                            ->whereYear('created_at', now()->year)
-                            ->sum('monto_total');
-
-        $egresos = 500.00; // Valor de ejemplo
-
-        $productosBajoStock = Producto::where('existencias', '<=', 10)->get();
-
+        $ventasHoy = Venta::whereDate('created_at', Carbon::today())->sum('total');
+        $ventasMes = Venta::whereMonth('created_at', Carbon::now()->month)->sum('total');
+        $productosBajoStock = Producto::where('existencias', '<=', 10)->get(['id', 'nombre', 'existencias']);
         $apartadosVigentes = Apartado::where('estado', 'vigente')
-                                    ->with('cliente') // Cargamos la relación del cliente
-                                    ->get()
-                                    ->map(function($apartado) {
-                                        return [
-                                            'id' => $apartado->id,
-                                            'monto_total' => $apartado->monto_total,
-                                            'fecha_vencimiento' => $apartado->fecha_vencimiento,
-                                            'cliente_nombre' => $apartado->cliente->nombre ?? 'Sin Cliente'
-                                        ];
-                                    });
+            ->with('cliente:id,name')
+            ->get(['id', 'cliente_id', 'monto_total', 'fecha_vencimiento'])
+            ->map(fn($a) => [
+                'id' => $a->id,
+                'cliente_nombre' => $a->cliente->name ?? 'N/A',
+                'monto_total' => $a->monto_total,
+                'fecha_vencimiento' => $a->fecha_vencimiento,
+            ]);
 
-        // CAMBIO: Devolver JSON con todas las estadísticas
         return response()->json([
-            'ventasHoy' => $ventasHoy,
-            'ventasMes' => $ventasMes,
-            'egresos' => $egresos,
+            'ventasHoy' => (float) $ventasHoy,
+            'ventasMes' => (float) $ventasMes,
+            'egresos' => 1350.75, // Dato DUMMY como en tu frontend
             'productosBajoStock' => $productosBajoStock,
             'apartadosVigentes' => $apartadosVigentes,
         ]);

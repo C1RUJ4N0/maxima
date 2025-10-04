@@ -11,11 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // Renombramos la tabla a 'clientes'
+        // CORRECCIÓN CLAVE: Se añaden las columnas que faltaban
         Schema::create('clientes', function (Blueprint $table) {
             $table->id();
             $table->string('nombre');
-            $table->string('numero_telefono')->nullable();
+            $table->string('telefono')->nullable();
+            $table->string('email')->nullable()->unique();
             $table->timestamps();
         });
     }

@@ -1,52 +1,32 @@
-@extends('layouts.app')
-
-@section('title', 'Registro - Maxima POS')
+@extends('layouts.guest')
 
 @section('content')
-<div class="min-h-screen flex items-center justify-center bg-gray-100">
-    <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
-        <h1 class="text-3xl font-bold text-gray-800 mb-6 text-center">Crear cuenta</h1>
-
-        <form method="POST" action="{{ route('register') }}">
-            @csrf
-
-            <label class="block text-gray-700 mb-2">Nombre completo</label>
-            <input type="text" name="name" required
-                   class="w-full px-4 py-2 mb-4 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500 @error('name') border-red-500 @enderror"
-                   value="{{ old('name') }}">
-            @error('name')
-                <p class="text-red-500 text-xs mb-2">{{ $message }}</p>
-            @enderror
-
-            <label class="block text-gray-700 mb-2">Correo electrónico</label>
-            <input type="email" name="email" required
-                   class="w-full px-4 py-2 mb-4 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500 @error('email') border-red-500 @enderror"
-                   value="{{ old('email') }}">
-            @error('email')
-                <p class="text-red-500 text-xs mb-2">{{ $message }}</p>
-            @enderror
-
-            <label class="block text-gray-700 mb-2">Contraseña</label>
-            <input type="password" name="password" required
-                   class="w-full px-4 py-2 mb-4 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500 @error('password') border-red-500 @enderror">
-            @error('password')
-                <p class="text-red-500 text-xs mb-2">{{ $message }}</p>
-            @enderror
-
-            <label class="block text-gray-700 mb-2">Confirmar contraseña</label>
-            <input type="password" name="password_confirmation" required
-                   class="w-full px-4 py-2 mb-4 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
-
-            <button type="submit"
-                    class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition">
+    <form method="POST" action="{{ route('register') }}">
+        @csrf
+        <h2 class="text-2xl font-bold text-center mb-6">Crear Cuenta</h2>
+        <div>
+            <label for="name" class="block font-medium text-sm text-gray-700">Nombre</label>
+            <input id="name" class="block mt-1 w-full border-gray-300 rounded-md shadow-sm" type="text" name="name" value="{{ old('name') }}" required autofocus />
+        </div>
+        <div class="mt-4">
+            <label for="email" class="block font-medium text-sm text-gray-700">Email</label>
+            <input id="email" class="block mt-1 w-full border-gray-300 rounded-md shadow-sm" type="email" name="email" value="{{ old('email') }}" required />
+        </div>
+        <div class="mt-4">
+            <label for="password" class="block font-medium text-sm text-gray-700">Contraseña</label>
+            <input id="password" class="block mt-1 w-full border-gray-300 rounded-md shadow-sm" type="password" name="password" required />
+        </div>
+        <div class="mt-4">
+            <label for="password_confirmation" class="block font-medium text-sm text-gray-700">Confirmar Contraseña</label>
+            <input id="password_confirmation" class="block mt-1 w-full border-gray-300 rounded-md shadow-sm" type="password" name="password_confirmation" required />
+        </div>
+        <div class="flex items-center justify-end mt-4">
+            <a class="underline text-sm text-gray-600 hover:text-gray-900" href="{{ route('login') }}">
+                ¿Ya estás registrado?
+            </a>
+            <button type="submit" class="ms-4 inline-flex items-center px-4 py-2 bg-gray-800 border rounded-md font-semibold text-xs text-white uppercase hover:bg-gray-700">
                 Registrarse
             </button>
-        </form>
-
-        <div class="mt-6 text-center text-sm">
-            ¿Ya tienes cuenta? 
-            <a href="{{ route('login') }}" class="text-blue-600 hover:underline">Iniciar sesión</a>
         </div>
-    </div>
-</div>
+    </form>
 @endsection

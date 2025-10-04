@@ -1,39 +1,33 @@
-@extends('layouts.app')
-
-@section('title', 'Recuperar contraseña - Maxima POS')
+@extends('layouts.guest')
 
 @section('content')
-<div class="min-h-screen flex items-center justify-center bg-gray-100">
-    <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
-        <h1 class="text-2xl font-bold text-gray-800 mb-4 text-center">Recuperar contraseña</h1>
-        <p class="text-sm text-gray-600 mb-6 text-center">Ingresa tu correo para recibir el link de recuperación</p>
-
-        @if (session('status'))
-            <div class="bg-green-100 text-green-700 p-2 rounded mb-4 text-center">
-                {{ session('status') }}
-            </div>
-        @endif
-
-        <form method="POST" action="{{ route('password.email') }}">
-            @csrf
-
-            <label class="block mb-2 text-gray-700">Correo electrónico</label>
-            <input type="email" name="email" required
-                   class="w-full px-4 py-2 mb-4 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500 @error('email') border-red-500 @enderror"
-                   value="{{ old('email') }}">
-            @error('email')
-                <p class="text-red-500 text-xs mb-2">{{ $message }}</p>
-            @enderror
-
-            <button type="submit"
-                    class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition">
-                Enviar link de recuperación
-            </button>
-        </form>
-
-        <div class="mt-4 text-center">
-            <a href="{{ route('login') }}" class="text-blue-600 hover:underline">Volver al login</a>
-        </div>
+    <div class="mb-4 text-sm text-gray-600">
+        ¿Olvidaste tu contraseña? No hay problema. Simplemente déjanos saber tu dirección de correo electrónico y te enviaremos un enlace para restablecer la contraseña que te permitirá elegir una nueva.
     </div>
-</div>
+
+    <!-- Session Status -->
+    @if (session('status'))
+        <div class="mb-4 font-medium text-sm text-green-600">
+            {{ session('status') }}
+        </div>
+    @endif
+
+    <form method="POST" action="{{ route('password.email') }}">
+        @csrf
+
+        <!-- Email Address -->
+        <div>
+            <label for="email" class="block font-medium text-sm text-gray-700">Email</label>
+            <input id="email" class="block mt-1 w-full border-gray-300 rounded-md shadow-sm" type="email" name="email" value="{{ old('email') }}" required autofocus />
+             @error('email')
+                <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+            @enderror
+        </div>
+
+        <div class="flex items-center justify-end mt-4">
+            <button type="submit" class="w-full inline-flex items-center justify-center px-4 py-2 bg-gray-800 border rounded-md font-semibold text-xs text-white uppercase hover:bg-gray-700">
+                Enviar Enlace de Restablecimiento
+            </button>
+        </div>
+    </form>
 @endsection

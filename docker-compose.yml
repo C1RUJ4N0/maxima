@@ -1,27 +1,25 @@
-version: '3.8'
-
 services:
   app:
     build:
       context: .
       dockerfile: Dockerfile
-    image: laravel-pos-app
-    container_name: laravel-pos-app
+    image: maxima-app-image
+    container_name: maxima-app
     restart: unless-stopped
     volumes:
       - .:/var/www/html
     ports:
-      - "8000:80"
+      - "8000:8000"
     networks:
-      - pos-network
+      - maxima-network
     depends_on:
-      - db
-      - mailpit
-    command: php artisan serve --host=0.0.0.0 --port=80
+      db:
+        condition: service_healthy
+    command: php artisan serve --host=0.0.0.0 --port=8000
 
   db:
     image: mysql:8.0
-    container_name: laravel-pos-db
+    container_name: maxima-db
     restart: unless-stopped
     ports:
       - "3306:3306"
@@ -31,24 +29,43 @@ services:
       MYSQL_USER: laraveluser
       MYSQL_PASSWORD: password
     volumes:
-      - pos-db-data:/var/lib/mysql
+      - maxima-db-data:/var/lib/mysql
     networks:
-      - pos-network
+      - maxima-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  vite:
+    image: node:20-alpine
+    container_name: maxima-vite
+    restart: unless-stopped
+    working_dir: /var/www/html
+    volumes:
+      - .:/var/www/html
+    ports:
+      - "5173:5173"
+    networks:
+      - maxima-network
+    command: sh -c "npm install && npm run dev -- --host"
 
   mailpit:
     image: axllent/mailpit
-    container_name: mailpit
+    container_name: maxima-mailpit
     restart: unless-stopped
     ports:
-      - "1025:1025"   # SMTP
-      - "8025:8025"   # Web UI
+      - "1025:1025"
+      - "8025:8025"
     networks:
-      - pos-network
+      - maxima-network
 
 networks:
-  pos-network:
+  maxima-network:
     driver: bridge
 
 volumes:
-  pos-db-data:
+  maxima-db-data:
     driver: local
