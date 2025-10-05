@@ -162,6 +162,15 @@
                         <div class="bg-gray-100 p-4 rounded-lg text-center"><p>Total a pagar:</p><p class="text-4xl font-bold" x-text="`$${totalVenta}`"></p></div>
                         <div><label for="monto_recibido">Monto Recibido:</label><input type="number" id="monto_recibido" x-model.number="montoRecibido" class="w-full p-2 border rounded-lg text-lg"></div>
                         <div class="bg-yellow-100 p-4 rounded-lg text-center"><p>Cambio:</p><p class="text-3xl font-bold" x-text="textoCambio"></p></div>
+                        
+                        <div>
+                            <label class="font-semibold">Método de Pago</label>
+                            <div class="grid grid-cols-3 gap-2 mt-2">
+                                <button @click="metodoPago = 'efectivo'" :class="{'bg-indigo-600 text-white': metodoPago === 'efectivo', 'bg-gray-200 hover:bg-gray-300': metodoPago !== 'efectivo'}" class="p-2 rounded-lg text-sm transition-colors">Efectivo</button>
+                                <button @click="metodoPago = 'tarjeta'" :class="{'bg-indigo-600 text-white': metodoPago === 'tarjeta', 'bg-gray-200 hover:bg-gray-300': metodoPago !== 'tarjeta'}" class="p-2 rounded-lg text-sm transition-colors">Tarjeta</button>
+                                <button @click="metodoPago = 'transferencia'" :class="{'bg-indigo-600 text-white': metodoPago === 'transferencia', 'bg-gray-200 hover:bg-gray-300': metodoPago !== 'transferencia'}" class="p-2 rounded-lg text-sm transition-colors">Transfer</button>
+                            </div>
+                        </div>
                     </div>
                     <div class="mt-auto pt-4 space-y-2 border-t">
                         <button @click="abrirModal('apartado')" :disabled="esClienteGeneral() || carrito.length === 0" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg disabled:bg-gray-400"><i class="fas fa-inbox mr-2"></i> CREAR APARTADO</button>
@@ -175,7 +184,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div class="bg-white p-6 rounded-lg shadow-xl text-center"><h3 class="text-lg font-semibold text-gray-500">Ventas del Día</h3><p class="text-4xl font-bold mt-2" x-text="`$${parseFloat(estadisticas.ventasHoy).toFixed(2)}`"></p></div>
                     <div class="bg-white p-6 rounded-lg shadow-xl text-center"><h3 class="text-lg font-semibold text-gray-500">Ventas del Mes</h3><p class="text-4xl font-bold mt-2" x-text="`$${parseFloat(estadisticas.ventasMes).toFixed(2)}`"></p></div>
-                    <div class="bg-white p-6 rounded-lg shadow-xl text-center"><h3 class="text-lg font-semibold text-gray-500">Egresos del Mes</h3><p class="text-4xl font-bold mt-2 text-red-500" x-text="`$${parseFloat(estadisticas.egresos).toFixed(2)}`"></p></div>
+                    <div class="bg-white p-6 rounded-lg shadow-xl text-center"><h3 class="text-lg font-semibold text-gray-500">Egresos Totales</h3><p class="text-4xl font-bold mt-2 text-red-500" x-text="`$${parseFloat(estadisticas.egresos).toFixed(2)}`"></p></div>
                 </div>
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <div class="bg-white p-6 rounded-lg shadow-xl"><h3 class="text-xl font-bold mb-4">Productos con Bajo Stock</h3><ul class="divide-y"><template x-for="p in estadisticas.productosBajoStock" :key="p.id"><li class="py-2 flex justify-between"><span x-text="p.nombre"></span><span class="font-semibold text-red-500" x-text="`Stock: ${p.existencias}`"></span></li></template></ul></div>
@@ -229,6 +238,7 @@
             // State
             cargandoInicial: true, cargando: false, productos: [], clientes: [], carrito: [],
             pestañaActiva: 'Inventario', busqueda: '', clienteSeleccionadoId: null, montoRecibido: null,
+            metodoPago: 'efectivo', // <-- NUEVA VARIABLE AÑADIDA
             modalActivo: null,
             nuevoCliente: { nombre: '', telefono: '', email: '' },
             nuevoApartado: { monto_pagado: null, fecha_vencimiento: '' },
@@ -252,6 +262,7 @@
                 this.cargandoInicial = true;
                 try {
                     await this.obtenerClientes();
+                    await this.obtenerEstadisticas();
                 } catch (error) {
                     console.error("Error fatal al iniciar la aplicación:", error);
                     this.notificar("No se pudo conectar con el servidor.", false);
@@ -316,20 +327,15 @@
                     await this.obtenerClientes();
                     this.clienteSeleccionadoId = data.cliente.id;
                 } catch (error) {
-                    if (error.errors) {
-                        const primerError = Object.values(error.errors)[0][0];
-                        this.notificar(primerError, false);
-                    }
+                    if (error.errors) this.notificar(Object.values(error.errors)[0][0], false);
                 }
             },
             
             async guardarNuevoApartado() {
                 try {
                     const apartadoData = { 
-                        cliente_id: this.clienteSeleccionadoId, 
-                        monto_total: this.totalVenta, 
-                        monto_pagado: this.nuevoApartado.monto_pagado, 
-                        fecha_vencimiento: this.nuevoApartado.fecha_vencimiento, 
+                        cliente_id: this.clienteSeleccionadoId, monto_total: this.totalVenta, 
+                        monto_pagado: this.nuevoApartado.monto_pagado, fecha_vencimiento: this.nuevoApartado.fecha_vencimiento, 
                         items: this.carrito.map(p => ({ id: p.id, cantidad: p.cantidad })) 
                     };
                     await this.fetchAPI('/apartados', { method: 'POST', body: JSON.stringify(apartadoData) });
@@ -345,17 +351,14 @@
                     this.notificar(`Producto '${productoCreado.nombre}' añadido.`);
                     this.modalActivo = null;
                 } catch (error) {
-                    if (error.errors) {
-                        const primerError = Object.values(error.errors)[0][0];
-                        this.notificar(primerError, false);
-                    }
+                    if (error.errors) this.notificar(Object.values(error.errors)[0][0], false);
                 }
             },
             
             async cambiarPestaña(pestaña) {
                 this.pestañaActiva = pestaña;
                 try {
-                    if (pestaña === 'Estadísticas' && !this.estadisticas.loaded) await this.obtenerEstadisticas();
+                    if (pestaña === 'Estadísticas') await this.obtenerEstadisticas();
                     if (pestaña === 'Proveedores' && this.proveedores.length === 0) await this.obtenerProveedores();
                     if (pestaña === 'Apartados' && this.apartados.length === 0) await this.obtenerApartados();
                 } catch (error) { /* Ya notificado */ }
@@ -388,10 +391,7 @@
                     await this.obtenerProveedores();
                     this.seleccionarProveedor(data.id);
                 } catch (error) {
-                    if (error.errors) {
-                        const primerError = Object.values(error.errors)[0][0];
-                        this.notificar(primerError, false);
-                    }
+                    if (error.errors) this.notificar(Object.values(error.errors)[0][0], false);
                 }
             },
             
@@ -402,6 +402,39 @@
                     this.modalActivo = null;
                     await this.seleccionarProveedor(this.proveedorSeleccionado.id);
                 } catch (error) { /* Ya notificado */ }
+            },
+
+            // #############################################################
+            // #####               FUNCIÓN CORREGIDA                   #####
+            // #############################################################
+            async finalizarVenta() {
+                const ventaData = {
+                    carrito: this.carrito.map(item => ({
+                        id: item.id,
+                        cantidad: item.cantidad,
+                        precio_venta: item.precio // Asegurarse de enviar el precio
+                    })),
+                    cliente_id: this.clienteSeleccionadoId,
+                    monto_recibido: this.montoRecibido,
+                    metodo_pago: this.metodoPago // <-- Usa la nueva variable de estado
+                };
+
+                try {
+                    const resultado = await this.fetchAPI('/ventas', {
+                        method: 'POST',
+                        body: JSON.stringify(ventaData)
+                    });
+
+                    this.notificar(resultado.message || 'Venta finalizada con éxito.', true);
+                    this.restablecerVenta();
+                    
+                    // Actualizar estadísticas para ver el cambio al instante
+                    await this.obtenerEstadisticas();
+
+                } catch (error) {
+                    console.error("Error al finalizar la venta:", error);
+                    // fetchAPI ya se encarga de mostrar la notificación
+                }
             },
 
             // UI & Cart Methods
@@ -439,10 +472,7 @@
                 this.clienteSeleccionadoId = this.clienteGeneralId;
                 this.busqueda = '';
                 this.productos = [];
-            },
-            async finalizarVenta() {
-                this.notificar('Venta finalizada con éxito.');
-                this.restablecerVenta();
+                this.metodoPago = 'efectivo'; // <-- Resetea el método de pago
             },
             notificar(mensaje, exito = true) {
                 this.notificacion = { mensaje, exito };

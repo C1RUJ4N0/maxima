@@ -2,61 +2,64 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Http\Request;
 use App\Models\Venta;
 use App\Models\ItemVenta;
 use App\Models\Producto;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class VentaController extends Controller
 {
-    public function finalizarVentaApi(Request $request)
+    public function store(Request $request)
     {
-        $validator = Validator::make($request->all(), [
-            'items' => 'required|array|min:1',
-            'items.*.id' => 'required|integer|exists:productos,id',
-            'items.*.cantidad' => 'required|integer|min:1',
-            'clienteIdSeleccionado' => 'required|integer|exists:clientes,id',
-            'montoTotal' => 'required|numeric|min:0',
+        $validatedData = $request->validate([
+            'carrito' => 'required|array|min:1',
+            'carrito.*.id' => 'required|integer|exists:productos,id',
+            'carrito.*.cantidad' => 'required|integer|min:1',
+            'cliente_id' => 'nullable|integer|exists:clientes,id',
+            'monto_recibido' => 'required|numeric|min:0',
+            'metodo_pago' => 'required|string|in:efectivo,tarjeta,transferencia',
         ]);
-
-        if ($validator->fails()) {
-            return response()->json(['error' => $validator->errors()], 422);
-        }
 
         DB::beginTransaction();
         try {
+            $totalVenta = 0;
+            foreach ($validatedData['carrito'] as $item) {
+                $producto = Producto::findOrFail($item['id']);
+                if ($producto->existencias < $item['cantidad']) {
+                    throw new \Exception('Stock insuficiente para: ' . $producto->nombre);
+                }
+                $totalVenta += $item['cantidad'] * $producto->precio;
+            }
+
             $venta = Venta::create([
-                'cliente_id' => $request->clienteIdSeleccionado,
-                'total' => $request->montoTotal,
-                'fecha_venta' => now(),
+                'cliente_id' => $validatedData['cliente_id'],
+                'monto_total' => $totalVenta,
+                'monto_recibido' => $validatedData['monto_recibido'],
+                'cambio' => $validatedData['monto_recibido'] - $totalVenta,
+                'users_id' => Auth::id(),
+                'metodo_pago' => $validatedData['metodo_pago'],
             ]);
 
-            foreach ($request->items as $item) {
-                $producto = Producto::find($item['id']);
-
-                if ($producto->existencias < $item['cantidad']) {
-                    DB::rollBack();
-                    return response()->json(['error' => ['stock' => ["Stock insuficiente para: {$producto->nombre}"]]], 409);
-                }
-
+            foreach ($validatedData['carrito'] as $item) {
+                $producto = Producto::findOrFail($item['id']);
                 ItemVenta::create([
                     'venta_id' => $venta->id,
-                    'producto_id' => $producto->id,
+                    'producto_id' => $item['id'],
                     'cantidad' => $item['cantidad'],
-                    'precio_unitario' => $producto->precio,
+                    'precio' => $producto->precio,
                 ]);
-
                 $producto->decrement('existencias', $item['cantidad']);
             }
 
             DB::commit();
-            return response()->json(['mensaje' => 'Venta finalizada', 'id_venta' => $venta->id], 201);
-
+            return response()->json(['message' => 'Venta registrada. Stock actualizado.'], 201);
         } catch (\Exception $e) {
             DB::rollBack();
-            return response()->json(['error' => 'Error en la transacción: ' . $e->getMessage()], 500);
+            Log::error("Error al registrar la venta: " . $e->getMessage());
+            return response()->json(['message' => $e->getMessage()], 422);
         }
     }
 }

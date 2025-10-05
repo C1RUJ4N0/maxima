@@ -6,6 +6,10 @@ use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\ResetPasswordController;
 use App\Http\Controllers\PanelController;
+use App\Http\Controllers\EstadisticasController;
+use App\Http\Controllers\ProveedoresController;
+use App\Http\Controllers\RegistroVentasController;
+use App\Http\Controllers\FacturaController;
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -25,4 +29,16 @@ Route::middleware('guest')->group(function() {
 Route::middleware('auth')->group(function() {
     Route::post('/logout', [LoginController::class,'logout'])->name('logout');
     Route::get('/panel', [PanelController::class,'index'])->name('panel.index');
+    
+    // Ruta para la página de estadísticas
+    Route::get('/estadisticas', [EstadisticasController::class, 'index'])->name('estadisticas');
+    
+    // Ruta para la página de proveedores
+    Route::get('/proveedores', [ProveedoresController::class, 'index'])->name('proveedores'); // Asumiendo que tienes esta ruta
+
+    // Ruta para el nuevo registro de ventas
+    Route::get('/registro-ventas', [RegistroVentasController::class, 'index'])->name('registroventas.index');
+    
+    // Ruta para actualizar el estado de las facturas
+    Route::put('/facturas/{factura}', [FacturaController::class, 'update'])->name('facturas.update');
 });

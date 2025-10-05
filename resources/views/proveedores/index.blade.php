@@ -1,56 +1,92 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container">
-    <h1>Gestión de Proveedores</h1>
+<div class="container mx-auto px-4">
+    <h1 class="text-2xl font-bold mb-4">Gestión de Proveedores y Facturas</h1>
 
-    <button type="button" class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#createProveedorModal">
-        Nuevo Proveedor
-    </button>
-
-    @if(session('success'))
-        <div class="alert alert-success">{{ session('success') }}</div>
+    {{-- Bloque para mostrar mensajes de éxito, error o información --}}
+    @if (session('success'))
+        <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4" role="alert">
+            <strong class="font-bold">¡Éxito!</strong>
+            <span class="block sm:inline">{{ session('success') }}</span>
+        </div>
+    @endif
+    @if (session('error'))
+        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+            <strong class="font-bold">¡Error!</strong>
+            <span class="block sm:inline">{{ session('error') }}</span>
+        </div>
     @endif
 
-    <div class="card">
-        <div class="card-body">
-            <table class="table table-hover">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Nombre</th>
-                        <th>Teléfono</th>
-                        <th>Email</th>
-                        <th>Acciones</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach($proveedores as $proveedor)
-                    <tr>
-                        <td>{{ $proveedor->id }}</td>
-                        <td>{{ $proveedor->nombre }}</td>
-                        <td>{{ $proveedor->telefono }}</td>
-                        <td>{{ $proveedor->email }}</td>
-                        <td>
-                            <button class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#editProveedorModal{{ $proveedor->id }}">Editar</button>
-                            <form action="{{ route('proveedores.destroy', $proveedor) }}" method="POST" style="display:inline-block;">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('¿Estás seguro?')">Eliminar</button>
-                            </form>
-                        </td>
-                    </tr>
-                    @endforeach
-                </tbody>
-            </table>
+    {{-- Aquí puedes colocar tus formularios para crear proveedores y facturas --}}
+
+    <div class="bg-white shadow-md rounded-lg overflow-hidden">
+        <div class="p-4">
+            <h2 class="text-xl font-semibold">Listado de Proveedores</h2>
         </div>
+        @forelse ($proveedores as $proveedor)
+            <div class="border-t">
+                <div class="p-4 bg-gray-50 flex justify-between items-center">
+                    <div>
+                        <h3 class="font-bold text-lg">{{ $proveedor->nombre }}</h3>
+                        <p class="text-sm text-gray-600">{{ $proveedor->telefono }} - {{ $proveedor->email }}</p>
+                    </div>
+                    {{-- Aquí podrías poner botones para editar/eliminar proveedor --}}
+                </div>
+                <div class="p-4">
+                    <h4 class="font-semibold mb-2 text-gray-700">Facturas Asociadas</h4>
+                    @if($proveedor->facturas->isEmpty())
+                        <p class="text-sm text-gray-500 italic">Este proveedor no tiene facturas registradas.</p>
+                    @else
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full text-sm">
+                                <thead class="bg-gray-100">
+                                    <tr>
+                                        <th class="py-2 px-3 text-left">N° Factura</th>
+                                        <th class="py-2 px-3 text-left">Monto</th>
+                                        <th class="py-2 px-3 text-left">Fecha Emisión</th>
+                                        <th class="py-2 px-3 text-left">Estado</th>
+                                        <th class="py-2 px-3 text-center">Acción</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach ($proveedor->facturas as $factura)
+                                        <tr class="border-b hover:bg-gray-50">
+                                            <td class="py-2 px-3">{{ $factura->numero_factura }}</td>
+                                            <td class="py-2 px-3">${{ number_format($factura->monto, 2) }}</td>
+                                            <td class="py-2 px-3">{{ \Carbon\Carbon::parse($factura->fecha_emision)->format('d/m/Y') }}</td>
+                                            <td class="py-2 px-3">
+                                                @if ($factura->estado == 'pagada')
+                                                    <span class="px-2 py-1 font-semibold text-xs leading-tight text-green-700 bg-green-100 rounded-full">Pagada</span>
+                                                @else
+                                                    <span class="px-2 py-1 font-semibold text-xs leading-tight text-yellow-700 bg-yellow-100 rounded-full">Pendiente</span>
+                                                @endif
+                                            </td>
+                                            <td class="py-2 px-3 text-center">
+                                                @if ($factura->estado == 'pendiente')
+                                                    <form action="{{ route('facturas.update', $factura) }}" method="POST">
+                                                        @csrf
+                                                        @method('PUT')
+                                                        <input type="hidden" name="estado" value="pagada">
+                                                        <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded text-xs transition duration-300">
+                                                            Pagar
+                                                        </button>
+                                                    </form>
+                                                @else
+                                                    <span>-</span>
+                                                @endif
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    @endif
+                </div>
+            </div>
+        @empty
+            <p class="p-4 text-center text-gray-500">No hay proveedores registrados.</p>
+        @endforelse
     </div>
 </div>
-
-@include('proveedores.create')
-
-@foreach($proveedores as $proveedor)
-    @include('proveedores.edit', ['proveedor' => $proveedor])
-@endforeach
-
 @endsection

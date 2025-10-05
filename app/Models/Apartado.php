@@ -14,18 +14,25 @@ class Apartado extends Model
     protected $fillable = [
         'cliente_id',
         'monto_total',
-        'amount_paid',
+        'monto_pagado',
+        'monto_restante', // <-- AÑADIDO
         'fecha_vencimiento',
         'estado',
+        'users_id'
     ];
 
     public function cliente(): BelongsTo
     {
-        return $this->belongsTo(Cliente::class, 'cliente_id');
+        return $this->belongsTo(Cliente::class);
     }
 
     public function items(): HasMany
     {
         return $this->hasMany(ItemApartado::class);
+    }
+
+    public function usuario(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'users_id');
     }
 }

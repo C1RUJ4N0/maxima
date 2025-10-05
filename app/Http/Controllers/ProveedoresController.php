@@ -1,70 +1,88 @@
 <?php
 
-namespace App\Http\Controllers; // <-- Con barra invertida \
+namespace App\Http\Controllers;
 
+use Illuminate\Http\Request;
 use App\Models\Proveedor;
 use App\Models\Factura;
-use Illuminate\Http\Request; // <-- Con barra invertida \
-use Illuminate\Support\Facades\Validator; // <-- Con barra invertida \
+use App\Models\Egreso; // <-- IMPORTANTE: Añadir el modelo Egreso
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class ProveedoresController extends Controller
 {
     /**
-     * Devuelve la lista de todos los proveedores.
+     * Devuelve todos los proveedores para la API.
      */
     public function apiIndex()
     {
-        return response()->json(['proveedores' => Proveedor::orderBy('nombre')->get()]);
+        $proveedores = Proveedor::orderBy('nombre')->get();
+        return response()->json(['proveedores' => $proveedores]);
     }
 
     /**
-     * Devuelve los detalles de un proveedor específico, incluyendo sus facturas.
-     */
-    public function apiShow($id)
-    {
-        $proveedor = Proveedor::with('facturas')->findOrFail($id);
-        return response()->json($proveedor);
-    }
-    
-    /**
-     * Guarda un nuevo proveedor en la base de datos.
+     * Almacena un nuevo proveedor desde la API.
      */
     public function apiStore(Request $request)
     {
-        $validator = Validator::make($request->all(), [
-            'nombre' => 'required|string|max:255',
+        $validatedData = $request->validate([
+            'nombre' => 'required|string|max:255|unique:proveedores',
             'telefono' => 'required|string|max:20',
-            'email' => 'nullable|email|max:255|unique:proveedores,email',
+            'email' => 'nullable|email|max:255',
             'descripcion' => 'nullable|string',
         ]);
 
-        if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
-        }
+        $proveedor = Proveedor::create($validatedData);
 
-        $proveedor = Proveedor::create($request->all());
         return response()->json($proveedor, 201);
     }
 
     /**
-     * Guarda una nueva factura para un proveedor específico.
+     * Muestra los detalles de un proveedor específico para la API.
      */
-    public function apiStoreFactura(Request $request, $id_proveedor)
+    public function apiShow(Proveedor $proveedor)
     {
-        $validator = Validator::make($request->all(), [
-            'numero_factura' => 'required|string|max:255',
-            'monto' => 'required|numeric|min:0',
+        // Cargar las facturas asociadas al proveedor
+        $proveedor->load('facturas');
+        return response()->json($proveedor);
+    }
+
+    /**
+     * Almacena una nueva factura para un proveedor y crea un egreso automáticamente.
+     * ESTA ES LA FUNCIÓN CORREGIDA.
+     */
+    public function apiStoreFactura(Request $request, Proveedor $proveedor)
+    {
+        $validatedData = $request->validate([
+            'numero_factura' => 'required|string|unique:facturas',
+            'monto' => 'required|numeric|min:0.01',
             'fecha_emision' => 'required|date',
         ]);
 
-        if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
-        }
+        DB::beginTransaction();
+        try {
+            // 1. Crear la factura y marcarla como pagada
+            $factura = $proveedor->facturas()->create([
+                'numero_factura' => $validatedData['numero_factura'],
+                'monto' => $validatedData['monto'],
+                'fecha_emision' => $validatedData['fecha_emision'],
+                'estado' => 'pagada', // Se guarda como 'pagada' porque el egreso es inmediato
+            ]);
 
-        $factura = new Factura($request->all());
-        $factura->proveedor_id = $id_proveedor;
-        $factura->save();
-        
-        return response()->json($factura, 201);
+            // 2. Crear el registro del Egreso (gasto)
+            Egreso::create([
+                'descripcion' => 'Factura N°' . $factura->numero_factura . ' de ' . $proveedor->nombre,
+                'monto' => $factura->monto,
+            ]);
+
+            DB::commit(); // Confirmar ambos cambios en la base de datos
+
+            return response()->json($factura, 201);
+
+        } catch (\Exception $e) {
+            DB::rollBack(); // Si algo falla, revertir todo
+            Log::error("Error al guardar factura y crear egreso: " . $e->getMessage());
+            return response()->json(['message' => 'No se pudo registrar la factura y el egreso.'], 500);
+        }
     }
 }

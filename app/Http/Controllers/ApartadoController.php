@@ -2,86 +2,83 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Http\Request;
 use App\Models\Apartado;
 use App\Models\ItemApartado;
 use App\Models\Producto;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
 
 class ApartadoController extends Controller
 {
-    public function index()
-    {
-        return view('apartados.index');
-    }
-
     public function apiIndex()
     {
-        $apartados = Apartado::with('cliente:id,nombre,telefono')
+        $apartados = Apartado::with('cliente')
+            ->where('estado', 'vigente')
             ->get()
-            ->map(fn($a) => [
-                'id' => $a->id,
-                'nombre_cliente' => $a->cliente->nombre ?? 'N/A',
-                'telefono' => $a->cliente->telefono ?? 'N/A',
-                'monto' => $a->monto_total,
-                'fecha_vencimiento' => $a->fecha_vencimiento,
-                'estado' => $a->estado,
-            ]);
-            
+            ->map(function ($apartado) {
+                return [
+                    'id' => $apartado->id,
+                    'nombre_cliente' => $apartado->cliente->nombre,
+                    'telefono' => $apartado->cliente->telefono,
+                    'monto' => $apartado->monto_restante,
+                    'fecha_vencimiento' => $apartado->fecha_vencimiento,
+                    'estado' => $apartado->estado,
+                ];
+            });
         return response()->json($apartados);
     }
 
     public function apiStore(Request $request)
     {
-        $validator = Validator::make($request->all(), [
-            'cliente_id' => 'required|integer|exists:clientes,id',
+        $validatedData = $request->validate([
+            'cliente_id' => 'required|exists:clientes,id',
             'monto_total' => 'required|numeric|min:0',
-            'monto_pagado' => 'required|numeric|min:0', // CORREGIDO a español
-            'fecha_vencimiento' => 'required|date',
+            'monto_pagado' => 'required|numeric|min:0',
+            'fecha_vencimiento' => 'required|date|after_or_equal:today',
             'items' => 'required|array|min:1',
-            'items.*.id' => 'required|integer|exists:productos,id',
+            'items.*.id' => 'required|exists:productos,id',
             'items.*.cantidad' => 'required|integer|min:1',
         ]);
 
-        if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
-        }
-
         DB::beginTransaction();
         try {
+            $montoRestante = $validatedData['monto_total'] - $validatedData['monto_pagado'];
+            if ($montoRestante < 0) {
+                throw new \Exception('El monto pagado no puede ser mayor al monto total.');
+            }
+
             $apartado = Apartado::create([
-                'cliente_id' => $request->cliente_id,
-                'monto_total' => $request->monto_total,
-                'monto_pagado' => $request->monto_pagado, // CORREGIDO a español
-                'fecha_vencimiento' => $request->fecha_vencimiento,
+                'cliente_id' => $validatedData['cliente_id'],
+                'monto_total' => $validatedData['monto_total'],
+                'monto_pagado' => $validatedData['monto_pagado'],
+                'monto_restante' => $montoRestante,
+                'fecha_vencimiento' => $validatedData['fecha_vencimiento'],
                 'estado' => 'vigente',
+                'users_id' => Auth::id(),
             ]);
 
-            foreach ($request->items as $itemData) {
-                $producto = Producto::find($itemData['id']);
-
-                if ($producto->existencias < $itemData['cantidad']) {
-                    DB::rollBack();
-                    return response()->json(['message' => "Stock insuficiente para: {$producto->nombre}"], 409);
+            foreach ($validatedData['items'] as $item) {
+                $producto = Producto::findOrFail($item['id']);
+                if ($producto->existencias < $item['cantidad']) {
+                    throw new \Exception('Stock insuficiente para apartar: ' . $producto->nombre);
                 }
-
                 ItemApartado::create([
                     'apartado_id' => $apartado->id,
-                    'producto_id' => $producto->id,
-                    'cantidad' => $itemData['cantidad'],
-                    'precio_unitario' => $producto->precio,
+                    'producto_id' => $item['id'],
+                    'cantidad' => $item['cantidad'],
+                    'precio' => $producto->precio,
                 ]);
-
-                $producto->decrement('existencias', $itemData['cantidad']);
+                $producto->decrement('existencias', $item['cantidad']);
             }
 
             DB::commit();
             return response()->json($apartado, 201);
-
         } catch (\Exception $e) {
             DB::rollBack();
-            return response()->json(['message' => 'Error al crear el apartado: ' . $e->getMessage()], 500);
+            Log::error("Error al crear apartado: " . $e->getMessage());
+            return response()->json(['message' => 'No se pudo crear el apartado: ' . $e->getMessage()], 500);
         }
     }
 }

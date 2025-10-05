@@ -6,7 +6,6 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use App\Models\User;
 
 class Venta extends Model
 {
@@ -17,7 +16,8 @@ class Venta extends Model
         'monto_total',
         'monto_recibido',
         'cambio',
-        'user_id',
+        'users_id', // <-- CORREGIDO
+        'metodo_pago',
     ];
 
     public function cliente(): BelongsTo
@@ -32,6 +32,6 @@ class Venta extends Model
 
     public function usuario(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'usuario_id');
+        return $this->belongsTo(User::class, 'users_id');
     }
 }
