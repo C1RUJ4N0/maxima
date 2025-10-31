@@ -13,6 +13,6 @@ class ItemApartado extends Model
         'apartado_id',
         'producto_id',
         'cantidad',
-        'precio_unitario' // <-- CORRECCIÓN: Campo añadido
+        'precio'
     ];
 }

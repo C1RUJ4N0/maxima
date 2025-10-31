@@ -1,19 +1,27 @@
 <?php
 
+use Illuminate\Foundation\Testing\RefreshDatabase; // <-- ASEGÚRATE DE QUE ESTO ESTÉ IMPORTADO
+use Tests\TestCase;
+
 /*
 |--------------------------------------------------------------------------
 | Test Case
 |--------------------------------------------------------------------------
 |
-| The closure you provide to your test functions is always bound to a specific PHPUnit test
-| case class. By default, that class is "PHPUnit\Framework\TestCase". Of course, you may
-| need to change it using the "pest()" function to bind a different classes or traits.
+| Aplicamos TestCase (para cargar Laravel) y RefreshDatabase (para las
+| migraciones) a AMBAS carpetas: 'Feature' y 'Unit'.
 |
 */
 
+// Carga Laravel Y las migraciones para las pruebas 'Feature'
 pest()->extend(Tests\TestCase::class)
- // ->use(Illuminate\Foundation\Testing\RefreshDatabase::class)
+    ->use(RefreshDatabase::class) // <-- ESTA LÍNEA ES CRUCIAL PARA FEATURE
     ->in('Feature');
+
+// Carga Laravel Y las migraciones para las pruebas 'Unit'
+pest()->extend(Tests\TestCase::class)
+    ->use(RefreshDatabase::class) // <-- ESTA LÍNEA ES CRUCIAL PARA UNIT
+    ->in('Unit');
 
 /*
 |--------------------------------------------------------------------------

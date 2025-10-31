@@ -19,7 +19,7 @@
     @endif
 
     {{-- Aquí puedes colocar tus formularios para crear proveedores y facturas --}}
-
+    
     <div class="bg-white shadow-md rounded-lg overflow-hidden">
         <div class="p-4">
             <h2 class="text-xl font-semibold">Listado de Proveedores</h2>
@@ -31,8 +31,28 @@
                         <h3 class="font-bold text-lg">{{ $proveedor->nombre }}</h3>
                         <p class="text-sm text-gray-600">{{ $proveedor->telefono }} - {{ $proveedor->email }}</p>
                     </div>
-                    {{-- Aquí podrías poner botones para editar/eliminar proveedor --}}
+                    {{-- Botones de acción con clases Tailwind claras --}}
+                    <div class="flex space-x-2 items-center">
+                        {{-- Botón Modificar (Verde Sólido) --}}
+                        <button type="button" class="px-3 py-1 text-xs font-medium text-white bg-green-500 rounded-lg hover:bg-green-600 transition-colors" 
+                                data-bs-toggle="modal" data-bs-target="#editProveedorModal{{ $proveedor->id }}">
+                            <i class="fas fa-edit mr-1"></i> Modificar
+                        </button>
+                        
+                        {{-- Botón Eliminar (Rojo Sólido) --}}
+                        <form action="{{ route('proveedores.destroy', $proveedor) }}" method="POST" onsubmit="return confirm('¿Está seguro de que desea eliminar el proveedor {{ $proveedor->nombre }}?');">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="px-3 py-1 text-xs font-medium text-white bg-red-500 rounded-lg hover:bg-red-600 transition-colors">
+                                <i class="fas fa-trash mr-1"></i> Eliminar
+                            </button>
+                        </form>
+                    </div>
                 </div>
+                
+                {{-- Incluir el modal de edición --}}
+                @include('proveedores.edit', ['proveedor' => $proveedor])
+
                 <div class="p-4">
                     <h4 class="font-semibold mb-2 text-gray-700">Facturas Asociadas</h4>
                     @if($proveedor->facturas->isEmpty())

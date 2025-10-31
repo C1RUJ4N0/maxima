@@ -15,8 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('nombre')->unique();
             $table->integer('existencias');
-            $table->decimal('precio', 8, 2); // CORRECCIÓN: Se añade la columna 'precio'
-            $table->text('descripcion')->nullable();
+            $table->decimal('precio', 8, 2); 
             $table->timestamps();
         });
     }

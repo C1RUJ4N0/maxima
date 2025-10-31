@@ -4,7 +4,6 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Factura extends Model
 {
@@ -15,12 +14,11 @@ class Factura extends Model
         'numero_factura',
         'monto',
         'fecha_emision',
-        'fecha_vencimiento',
         'estado',
-        'ruta_archivo',
+        'imagen_url', // <-- AÑADIDO
     ];
 
-    public function proveedor(): BelongsTo
+    public function proveedor()
     {
         return $this->belongsTo(Proveedor::class);
     }

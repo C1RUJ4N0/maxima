@@ -16,7 +16,7 @@ return new class extends Migration
             $table->date('fecha_emision');
             $table->date('fecha_vencimiento')->nullable();
             $table->string('estado')->default('pendiente'); // ej: pendiente, pagada
-            $table->string('ruta_archivo')->nullable();
+            $table->string('imagen_url')->nullable();
             $table->timestamps();
         });
     }

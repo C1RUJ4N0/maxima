@@ -16,7 +16,7 @@ return new class extends Migration
             $table->foreignId('apartado_id')->constrained('apartados')->onDelete('cascade');
             $table->foreignId('producto_id')->constrained('productos')->onDelete('cascade');
             $table->integer('cantidad');
-            $table->decimal('precio_unitario', 8, 2); // <-- CORRECCIÓN: Columna añadida
+            $table->decimal('precio', 8, 2); 
             $table->timestamps();
         });
     }

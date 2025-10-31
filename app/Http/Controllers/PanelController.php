@@ -20,8 +20,8 @@ class PanelController extends Controller
 
         // Calcula las ventas realizadas en el mes actual
         $ventasMes = Venta::whereMonth('created_at', Carbon::now()->month)
-                          ->whereYear('created_at', Carbon::now()->year)
-                          ->sum('monto_total');
+                            ->whereYear('created_at', Carbon::now()->year)
+                            ->sum('monto_total');
 
         // Suma todos los egresos registrados
         $egresos = Egreso::sum('monto');
@@ -34,3 +34,4 @@ class PanelController extends Controller
         ]);
     }
 }
+

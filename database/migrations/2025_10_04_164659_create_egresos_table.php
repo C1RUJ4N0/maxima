@@ -13,7 +13,6 @@ return new class extends Migration
     {
         Schema::create('egresos', function (Blueprint $table) {
             $table->id();
-            $table->string('descripcion');
             $table->decimal('monto', 8, 2);
             $table->timestamps();
         });

@@ -15,10 +15,9 @@ class Apartado extends Model
         'cliente_id',
         'monto_total',
         'monto_pagado',
-        'monto_restante', // <-- AÑADIDO
+        'monto_restante',
         'fecha_vencimiento',
         'estado',
-        'users_id'
     ];
 
     public function cliente(): BelongsTo

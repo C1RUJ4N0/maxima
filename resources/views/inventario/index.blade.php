@@ -5,7 +5,6 @@
 @section('content')
     <main class="grid grid-cols-1 lg:grid-cols-3 gap-6" x-data="inventory()">
 
-        <!-- Columna de Listado -->
         <div class="col-span-1 lg:col-span-2 bg-white p-6 rounded-lg shadow-xl border">
             <div class="flex justify-between items-center mb-4 flex-wrap gap-4">
                 <h2 class="text-xl font-semibold text-gray-700">Productos en Stock</h2>
@@ -33,10 +32,12 @@
                                 <tr class="border-b hover:bg-gray-50">
                                     <td class="py-3 px-6 text-left font-medium" x-text="product.nombre"></td>
                                     <td class="py-3 px-6 text-center" x-text="product.existencias"></td>
-                                    <td class="py-3 px-6 text-right" x-text="`$${product.precio.toLocaleString('es-MX')}`"></td>
+                                    <td class="py-3 px-6 text-right" x-text="`$${product.precio.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`"></td>
                                     <td class="py-3 px-6 text-center space-x-2">
-                                        <button @click="openEditModal(product)" class="text-blue-500 hover:text-blue-700 transition-colors" title="Editar"><i class="fas fa-edit"></i></button>
-                                        <button @click="confirmDelete(product.id, product.nombre)" class="text-red-500 hover:text-red-700 transition-colors" title="Eliminar"><i class="fas fa-trash"></i></button>
+                                        {{-- Modificar (Verde Sólido) --}}
+                                        <button @click="openEditModal(product)" class="px-3 py-1 text-xs font-medium text-white bg-green-500 rounded-lg hover:bg-green-600 transition-colors" title="Modificar"><i class="fas fa-edit"></i></button>
+                                        {{-- Eliminar (Rojo Sólido) --}}
+                                        <button @click="confirmDelete(product.id, product.nombre)" class="px-3 py-1 text-xs font-medium text-white bg-red-500 rounded-lg hover:bg-red-600 transition-colors" title="Eliminar"><i class="fas fa-trash"></i></button>
                                     </td>
                                 </tr>
                             </template>
@@ -46,7 +47,6 @@
             </div>
         </div>
 
-        <!-- Columna de Registro (Ahora Botón que abre Modal) -->
         <div class="col-span-1 bg-white p-6 rounded-lg shadow-xl border h-fit sticky top-8">
             <h2 class="text-xl font-semibold text-gray-700 mb-4">Gestión de Productos</h2>
             <p class="text-gray-600 mb-4">Utiliza el modal para registrar un producto nuevo o editar uno existente.</p>
@@ -56,7 +56,6 @@
         </div>
     </main>
 
-    <!-- Modal de Creación/Edición -->
     <div x-cloak x-show="showModal" class="fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center z-50 p-4">
         <div @click.away="showModal = false; resetForm()" class="bg-white rounded-lg shadow-2xl w-full max-w-md p-6 transform transition-all duration-300" 
             x-transition:enter="ease-out duration-300"
@@ -96,7 +95,6 @@
         </div>
     </div>
     
-    <!-- Notificación (Toast) -->
     <div x-cloak x-show="showNotification" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition ease-in duration-300" x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 translate-y-4" class="fixed bottom-5 right-5 p-4 rounded-lg shadow-xl text-white z-50 transform transition-all" :class="notification.success ? 'bg-green-500' : 'bg-red-500'">
         <span x-text="notification.message"></span>
     </div>
@@ -131,14 +129,13 @@
                         return this.productos;
                     }
                     const searchTerm = this.searchInventory.toLowerCase();
-                    return this.productos.filter(p => p.nombre.toLowerCase().includes(searchTerm));
+                    return this.productos.filter(p => p.nombre.toLowerCase().includes(searchTerm) || String(p.id) === searchTerm);
                 },
 
                 // --- API CALLS ---
                 async fetchProductos() {
                     this.cargando = true;
                     try {
-                        // Endpoint: /api/inventario -> InventarioController::index
                         const response = await fetch('/api/inventario');
                         if (!response.ok) throw new Error('Error al cargar productos.');
                         const data = await response.json();
@@ -154,7 +151,7 @@
                 async saveProducto() {
                     this.cargandoForm = true;
                     const isUpdating = this.esEditando;
-                    const url = isUpdating ? `/api/inventario/${this.form.id}` : '/api/inventario';
+                    const url = isUpdating ? `/api/inventario/${this.form.id}` : '/api/inventario'; 
                     const method = isUpdating ? 'PUT' : 'POST';
                     
                     try {
@@ -162,7 +159,7 @@
                             method: method,
                             headers: {
                                 'Content-Type': 'application/json',
-                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content') // Requerido para Laravel
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
                             },
                             body: JSON.stringify({
                                 nombre: this.form.nombre,
@@ -191,7 +188,6 @@
                 },
 
                 async confirmDelete(id, nombre) {
-                    // Usar un modal o confirmación visual en lugar de window.confirm
                     if (!confirm(`¿Estás seguro de que quieres eliminar el producto: ${nombre}? Esta acción es irreversible.`)) {
                         return;
                     }

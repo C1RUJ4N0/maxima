@@ -1,7 +1,21 @@
-/* Tailwind Layers */
+/* Archivo: c1ruj4n0/maxima/maxima-030b0038ab74ffc8451adb61088ce2adaf308a1f/resources/css/app.css */
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* CLASE PERSONALIZADA PARA EL FONDO DE OLAS */
+.bg-maxima-waves {
+    /* Utiliza los colores definidos en tailwind.config.js */
+    background: linear-gradient(
+        155deg,
+        theme('colors.maxima-wave-blue-a') 0%,
+        theme('colors.maxima-wave-blue-b') 35%,
+        theme('colors.maxima-wave-blue-c') 100%
+    );
+    background-attachment: fixed;
+    background-size: cover;
+}
 
 /* Variables y base */
 @layer base {

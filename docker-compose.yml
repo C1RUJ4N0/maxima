@@ -1,5 +1,4 @@
 services:
-
   app:
     build:
       context: .
@@ -8,7 +7,6 @@ services:
     container_name: maxima-app
     restart: unless-stopped
     volumes:
-
       - .:/var/www/html:delegated
     ports:
       - "8000:8000"
@@ -17,9 +15,12 @@ services:
     depends_on:
       db:
         condition: service_healthy
-
-    command: sh -c "composer install && php artisan serve --host=0.0.0.0 --port=8000"
-
+      mailpit: 
+        condition: service_started
+    # --- LÍNEA MODIFICADA ---
+    # Añadimos "php -d opcache.enable=0" para deshabilitar la caché de PHP que impide ver los cambios
+    command: sh -c "composer install && php -d opcache.enable=0 artisan serve --host=0.0.0.0 --port=8000"
+    # --- FIN DE LA MODIFICACIÓN ---
 
   db:
     image: mysql:8.0
@@ -43,28 +44,33 @@ services:
       retries: 5
       start_period: 30s
 
-
   vite:
     image: node:20-alpine
     container_name: maxima-vite
     restart: unless-stopped
     working_dir: /var/www/html
-
     volumes:
       - .:/var/www/html
-
       - /var/www/html/node_modules
     ports:
       - "5173:5173"
     networks:
       - maxima-network
-
     command: sh -c "npm install && npm run dev -- --host"
+
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: maxima-mailpit
+    restart: unless-stopped
+    ports:
+      - "1025:1025" # Puerto SMTP
+      - "8025:8025" # Interfaz web
+    networks:
+      - maxima-network
 
 networks:
   maxima-network:
     driver: bridge
-
 
 volumes:
   maxima-db-data:

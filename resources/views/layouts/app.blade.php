@@ -6,8 +6,11 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ config('app.name', 'Maxima') }}</title>
 
-    {{-- Carga los estilos CSS de la aplicación --}}
+    {{-- Carga los estilos CSS de la aplicación (Tailwind) --}}
     @vite('resources/css/app.css')
+    
+    <!-- *** AÑADIR ESTO: BOOTSTRAP CSS *** -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" xintegrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
     
     {{-- Para los íconos del menú --}}
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
@@ -15,7 +18,7 @@
 <body class="bg-gray-100 font-sans antialiased">
     <div class="flex h-screen bg-gray-200">
         
-        {{-- Menú Lateral --}}
+        {{-- Menú Lateral (Tu código original de Tailwind) --}}
         <aside class="w-64 bg-gray-800 text-white p-4 hidden md:block">
             <h2 class="text-2xl font-bold mb-6 text-center">Maxima</h2>
             <nav>
@@ -60,7 +63,9 @@
         </div>
     </div>
 
-    {{-- LÍNEAS IMPORTANTES AÑADIDAS --}}
+    <!-- *** AÑADIR ESTO: BOOTSTRAP JS (Para que funcionen los modales) *** -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" xintegrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    
     {{-- Carga el JavaScript principal de tu aplicación --}}
     @vite('resources/js/app.js')
     
