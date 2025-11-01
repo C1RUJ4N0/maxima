@@ -4,7 +4,6 @@
 <div class="container mx-auto px-4">
     <h1 class="text-2xl font-bold mb-4">Gestión de Proveedores y Facturas</h1>
 
-    {{-- Bloque para mostrar mensajes de éxito, error o información --}}
     @if (session('success'))
         <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4" role="alert">
             <strong class="font-bold">¡Éxito!</strong>
@@ -17,8 +16,6 @@
             <span class="block sm:inline">{{ session('error') }}</span>
         </div>
     @endif
-
-    {{-- Aquí puedes colocar tus formularios para crear proveedores y facturas --}}
     
     <div class="bg-white shadow-md rounded-lg overflow-hidden">
         <div class="p-4">
@@ -31,15 +28,15 @@
                         <h3 class="font-bold text-lg">{{ $proveedor->nombre }}</h3>
                         <p class="text-sm text-gray-600">{{ $proveedor->telefono }} - {{ $proveedor->email }}</p>
                     </div>
-                    {{-- Botones de acción con clases Tailwind claras --}}
+                    
+                    {{-- // --- INICIO CAMBIO ADMIN --- // --}}
+                    @if(Auth::user()->role === 'admin')
                     <div class="flex space-x-2 items-center">
-                        {{-- Botón Modificar (Verde Sólido) --}}
                         <button type="button" class="px-3 py-1 text-xs font-medium text-white bg-green-500 rounded-lg hover:bg-green-600 transition-colors" 
                                 data-bs-toggle="modal" data-bs-target="#editProveedorModal{{ $proveedor->id }}">
                             <i class="fas fa-edit mr-1"></i> Modificar
                         </button>
                         
-                        {{-- Botón Eliminar (Rojo Sólido) --}}
                         <form action="{{ route('proveedores.destroy', $proveedor) }}" method="POST" onsubmit="return confirm('¿Está seguro de que desea eliminar el proveedor {{ $proveedor->nombre }}?');">
                             @csrf
                             @method('DELETE')
@@ -48,10 +45,15 @@
                             </button>
                         </form>
                     </div>
+                    @endif
+                    {{-- // --- FIN CAMBIO ADMIN --- // --}}
                 </div>
                 
-                {{-- Incluir el modal de edición --}}
-                @include('proveedores.edit', ['proveedor' => $proveedor])
+                {{-- // --- INICIO CAMBIO ADMIN --- // --}}
+                @if(Auth::user()->role === 'admin')
+                    @include('proveedores.edit', ['proveedor' => $proveedor])
+                @endif
+                {{-- // --- FIN CAMBIO ADMIN --- // --}}
 
                 <div class="p-4">
                     <h4 class="font-semibold mb-2 text-gray-700">Facturas Asociadas</h4>
@@ -83,18 +85,24 @@
                                                 @endif
                                             </td>
                                             <td class="py-2 px-3 text-center">
-                                                @if ($factura->estado == 'pendiente')
-                                                    <form action="{{ route('facturas.update', $factura) }}" method="POST">
-                                                        @csrf
-                                                        @method('PUT')
-                                                        <input type="hidden" name="estado" value="pagada">
-                                                        <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded text-xs transition duration-300">
-                                                            Pagar
-                                                        </button>
-                                                    </form>
+                                                {{-- // --- INICIO CAMBIO ADMIN --- // --}}
+                                                @if(Auth::user()->role === 'admin')
+                                                    @if ($factura->estado == 'pendiente')
+                                                        <form action="{{ route('facturas.update', $factura) }}" method="POST">
+                                                            @csrf
+                                                            @method('PUT')
+                                                            <input type="hidden" name="estado" value="pagada">
+                                                            <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded text-xs transition duration-300">
+                                                                Pagar
+                                                            </button>
+                                                        </form>
+                                                    @else
+                                                        <span>-</span>
+                                                    @endif
                                                 @else
                                                     <span>-</span>
                                                 @endif
+                                                {{-- // --- FIN CAMBIO ADMIN --- // --}}
                                             </td>
                                         </tr>
                                     @endforeach

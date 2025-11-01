@@ -18,6 +18,7 @@ Route::get('/', function () {
     return redirect()->route('login');
 });
 
+// Rutas de Invitados
 Route::middleware('guest')->group(function() {
     Route::get('/login', [LoginController::class,'showLoginForm'])->name('login');
     Route::post('/login', [LoginController::class,'login']);
@@ -29,65 +30,87 @@ Route::middleware('guest')->group(function() {
     Route::post('/password/reset', [ResetPasswordController::class,'reset'])->name('password.update');
 });
 
+// Rutas para TODOS los usuarios autenticados
 Route::middleware('auth')->group(function() {
     Route::post('/logout', [LoginController::class,'logout'])->name('logout');
     
-    // Ruta principal del Panel TPV
+    // --- VISTAS WEB (Visibles para todos) ---
     Route::get('/panel', [PanelController::class,'index'])->name('panel.index');
-    
-    // RUTAS WEB (VISTAS) - (Otras vistas que no son el TPV)
     Route::get('/inventario', [InventarioController::class, 'index'])->name('inventario.index');
     Route::get('/estadisticas', [EstadisticasController::class, 'index'])->name('estadisticas');
     Route::get('/proveedores', [ProveedoresController::class, 'index'])->name('proveedores'); 
     Route::get('/apartados', [ApartadoController::class, 'index'])->name('apartados.index'); 
     Route::get('/registro-ventas', [RegistroVentasController::class, 'index'])->name('registroventas.index');
-    
-    // CRUD WEB (Formularios tradicionales)
-    Route::put('/facturas/{factura}', [FacturaController::class, 'update'])->name('facturas.update'); // Web
-    Route::post('/proveedores', [ProveedoresController::class, 'store'])->name('proveedores.store');
-    Route::put('/proveedores/{proveedor}', [ProveedoresController::class, 'update'])->name('proveedores.update');
-    Route::delete('/proveedores/{proveedor}', [ProveedoresController::class, 'destroy'])->name('proveedores.destroy');
-    Route::post('/apartados', [ApartadoController::class, 'store'])->name('apartados.store'); 
-    Route::put('/apartados/{apartado}', [ApartadoController::class, 'update'])->name('apartados.update'); 
-    Route::delete('/apartados/{apartado}', [ApartadoController::class, 'destroy'])->name('apartados.destroy'); 
 
-    // RUTAS API INTERNAS (AJAX / TPV)
+    // --- API RUTAS (Lectura - Visibles para todos) ---
     Route::prefix('api')->group(function () {
-        
-        // Inventario/Productos/Clientes API (CRUD y listado)
+        // Inventario/Productos/Clientes (Lectura)
         Route::get('/inventario', [InventarioController::class, 'apiIndex']);
-        Route::post('/inventario', [InventarioController::class, 'storeProducto']); 
-        Route::put('/inventario/{producto}', [InventarioController::class, 'apiUpdateProducto']);
-        Route::delete('/inventario/{producto}', [InventarioController::class, 'apiDestroyProducto']);
         Route::get('/inventario/clientes', [InventarioController::class, 'getClientes']);
-        Route::post('/inventario/clientes', [InventarioController::class, 'storeCliente']);
         Route::get('/inventario/productos', [InventarioController::class, 'searchProductos']);
         
-        // Ventas (TPV)
+        // Ventas (Lectura)
         Route::get('/ventas', [VentaController::class, 'apiIndex']);
-        Route::post('/ventas', [VentaController::class, 'store']);
-        Route::put('/ventas/{venta}', [VentaController::class, 'apiUpdate']);
-        Route::delete('/ventas/{venta}', [VentaController::class, 'apiDestroy']);
         
-        // Estadísticas
+        // Estadísticas (Lectura)
         Route::get('/estadisticas', [EstadisticasController::class, 'apiIndex']);
         
-        // Proveedores API
+        // Proveedores (Lectura)
         Route::get('/proveedores', [ProveedoresController::class, 'apiIndex']);
-        Route::post('/proveedores', [ProveedoresController::class, 'apiStore']);
         Route::get('/proveedores/{proveedor}', [ProveedoresController::class, 'apiShow']);
-        Route::post('/proveedores/{proveedor}/facturas', [ProveedoresController::class, 'apiStoreFactura']);
-        Route::put('/proveedores/{proveedor}', [ProveedoresController::class, 'apiUpdate']);
-        Route::delete('/proveedores/{proveedor}', [ProveedoresController::class, 'apiDestroy']);
         
-        // Apartados API
+        // Apartados (Lectura)
         Route::get('/apartados', [ApartadoController::class, 'apiIndex']);
+
+        // --- RUTAS DE CREACIÓN PARA 'USER' ---
+        Route::post('/inventario/clientes', [InventarioController::class, 'storeCliente']);
         Route::post('/apartados', [ApartadoController::class, 'apiStore']);
-        Route::put('/apartados/{apartado}', [ApartadoController::class, 'apiUpdate']);
-        Route::delete('/apartados/{apartado}', [ApartadoController::class, 'apiDestroy']);
-        
-        // Facturas API
-        Route::put('/facturas/{factura}', [FacturaController::class, 'apiUpdate']);
-        Route::delete('/facturas/{factura}', [FacturaController::class, 'apiDestroy']);
+        Route::post('/ventas', [VentaController::class, 'store']);
     });
+
+    // -----------------------------------------------------------------
+    // --- ACCIONES DE ADMIN (Crear, Editar, Eliminar) ---
+    // Aquí usamos tu middleware 'admin'
+    // -----------------------------------------------------------------
+    Route::middleware('admin')->group(function () {
+    
+        // CRUD WEB (Formularios tradicionales)
+        Route::put('/facturas/{factura}', [FacturaController::class, 'update'])->name('facturas.update'); // Web
+        Route::post('/proveedores', [ProveedoresController::class, 'store'])->name('proveedores.store');
+        Route::put('/proveedores/{proveedor}', [ProveedoresController::class, 'update'])->name('proveedores.update');
+        Route::delete('/proveedores/{proveedor}', [ProveedoresController::class, 'destroy'])->name('proveedores.destroy');
+        Route::post('/apartados', [ApartadoController::class, 'store'])->name('apartados.store'); // <-- Esta es WEB, la de API está arriba
+        Route::put('/apartados/{apartado}', [ApartadoController::class, 'update'])->name('apartados.update'); 
+        Route::delete('/apartados/{apartado}', [ApartadoController::class, 'destroy'])->name('apartados.destroy'); 
+
+        // RUTAS API (Solo acciones de ADMIN)
+        Route::prefix('api')->group(function () {
+            
+            // Inventario/Productos (Crear, Editar, Borrar)
+            Route::post('/inventario', [InventarioController::class, 'storeProducto']); 
+            Route::put('/inventario/{producto}', [InventarioController::class, 'apiUpdateProducto']);
+            Route::delete('/inventario/{producto}', [InventarioController::class, 'apiDestroyProducto']);
+            
+            // Ventas (Editar, Borrar)
+            Route::put('/ventas/{venta}', [VentaController::class, 'apiUpdate']);
+            Route::delete('/ventas/{venta}', [VentaController::class, 'apiDestroy']);
+            
+            // Proveedores (Crear, Editar, Borrar)
+            Route::post('/proveedores', [ProveedoresController::class, 'apiStore']);
+            Route::post('/proveedores/{proveedor}/facturas', [ProveedoresController::class, 'apiStoreFactura']);
+            Route::put('/proveedores/{proveedor}', [ProveedoresController::class, 'apiUpdate']);
+            Route::delete('/proveedores/{proveedor}', [ProveedoresController::class, 'apiDestroy']);
+            
+            // Apartados (Editar, Borrar)
+            Route::put('/apartados/{apartado}', [ApartadoController::class, 'apiUpdate']);
+            Route::delete('/apartados/{apartado}', [ApartadoController::class, 'apiDestroy']);
+            
+            // Facturas (Editar, Borrar)
+            Route::put('/facturas/{factura}', [FacturaController::class, 'apiUpdate']);
+            Route::delete('/facturas/{factura}', [FacturaController::class, 'apiDestroy']);
+        });
+    
+    });
+    // --- FIN: RUTAS SÓLO PARA ADMINISTRADORES ---
+    
 });

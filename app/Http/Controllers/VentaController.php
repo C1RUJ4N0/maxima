@@ -59,9 +59,7 @@ class VentaController extends Controller
                     'venta_id' => $venta->id,
                     'producto_id' => $item['id'],
                     'cantidad' => $item['cantidad'],
-                    // --- ¡¡¡AQUÍ ESTÁ LA CORRECCIÓN!!! ---
-                    'precio' => $item['precio_venta'], // El campo se llama 'precio', no 'precio_venta'
-                    // --- FIN DE LA CORRECCIÓN ---
+                    'precio' => $item['precio_venta'], 
                 ]);
 
                 // Decrementa el stock
@@ -78,17 +76,26 @@ class VentaController extends Controller
     }
 
     /**
-     * Muestra la lista de ventas para el panel TPV.
+     * Muestra la lista de ventas para el panel TPV (PAGINADA).
      */
-    public function apiIndex()
+    // --- INICIO CAMBIO PAGINACIÓN ---
+    public function apiIndex(Request $request)
     {
-        $ventas = Venta::with('cliente')
-                        ->orderByDesc('created_at')
-                        ->take(50)
-                        ->get();
+        // Paginamos las ventas, 15 por página. 'orderByDesc' cumple "por fecha".
+        $ventasPaginadas = Venta::with('cliente')
+                                ->orderByDesc('created_at')
+                                ->paginate(15); // 15 ventas por página
                         
-        return response()->json($ventas);
+        // Calcular el monto total de las ventas SÓLO de esta página
+        $montoTotalPagina = $ventasPaginadas->sum('monto_total');
+
+        // Devolver un objeto estructurado
+        return response()->json([
+            'paginacion' => $ventasPaginadas,
+            'montoTotalPagina' => $montoTotalPagina // Total de la página actual
+        ]);
     }
+    // --- FIN CAMBIO PAGINACIÓN ---
 
     /**
      * Actualiza el método de pago de una venta.

@@ -1,42 +1,98 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container mx-auto px-4">
-    <h1 class="text-2xl font-bold mb-4">Registro de Ventas Diarias</h1>
+<div class="container-fluid px-4">
+    <h1 class="mt-4">Registro de Ventas</h1>
+    <ol class="breadcrumb mb-4">
+        <li class="breadcrumb-item"><a href="{{ route('panel.index') }}">Panel</a></li>
+        <li class="breadcrumb-item active">Registro de Ventas</li>
+    </ol>
+    
+    @if(session('success'))
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            {{ session('success') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
+    @if(session('error'))
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            {{ session('error') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
 
-    <div class="bg-white shadow-md rounded-lg overflow-x-auto">
-        <table class="min-w-full leading-normal">
-            <thead class="bg-gray-800 text-white">
-                <tr>
-                    <th class="px-5 py-3 border-b-2 border-gray-200 text-left text-sm font-semibold uppercase">Fecha</th>
-                    <th class="px-5 py-3 border-b-2 border-gray-200 text-left text-sm font-semibold uppercase">Efectivo</th>
-                    <th class="px-5 py-3 border-b-2 border-gray-200 text-left text-sm font-semibold uppercase">Transferencia</th>
-                    <th class="px-5 py-3 border-b-2 border-gray-200 text-left text-sm font-semibold uppercase">Tarjeta</th>
-                    <th class="px-5 py-3 border-b-2 border-gray-200 text-left text-sm font-semibold uppercase">Apartado</th>
-                    <th class="px-5 py-3 border-b-2 border-gray-200 text-left text-sm font-semibold uppercase">Total del Día</th>
-                </tr>
-            </thead>
-            <tbody>
-                @forelse($ventasPorDia as $venta)
-                <tr class="hover:bg-gray-100">
-                    <td class="px-5 py-4 border-b border-gray-200 text-sm">{{ \Carbon\Carbon::parse($venta->fecha)->format('d/m/Y') }}</td>
-                    <td class="px-5 py-4 border-b border-gray-200 text-sm">${{ number_format($venta->efectivo, 2) }}</td>
-                    <td class="px-5 py-4 border-b border-gray-200 text-sm">${{ number_format($venta->transferencia, 2) }}</td>
-                    <td class="px-5 py-4 border-b border-gray-200 text-sm">${{ number_format($venta->tarjeta, 2) }}</td>
-                    <td class="px-5 py-4 border-b border-gray-200 text-sm">${{ number_format($venta->apartado, 2) }}</td>
-                    <td class="px-5 py-4 border-b border-gray-200 text-sm font-bold text-gray-900">${{ number_format($venta->total_dia, 2) }}</td>
-                </tr>
-                @empty
-                <tr>
-                    <td colspan="6" class="text-center py-10 text-gray-500">No hay ventas registradas.</td>
-                </tr>
-                @endforelse
-            </tbody>
-        </table>
-    </div>
-
-    <div class="mt-4">
-        {{ $ventasPorDia->links() }}
+    <div class="card mb-4">
+        <div class="card-header">
+            <i class="fas fa-receipt me-1"></i>
+            Ventas Realizadas
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th>ID Venta</th>
+                            <th>Cliente</th>
+                            <th>Total</th>
+                            <th>Método de Pago</th>
+                            <th>Fecha y Hora</th>
+                            <th>Productos</th>
+                            {{-- // --- INICIO CAMBIO ADMIN --- // --}}
+                            @if(Auth::user()->role === 'admin')
+                            <th>Acciones</th>
+                            @endif
+                            {{-- // --- FIN CAMBIO ADMIN --- // --}}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse ($ventas as $venta)
+                        <tr>
+                            <td>{{ $venta->id }}</td>
+                            <td>{{ $venta->cliente->nombre ?? 'Cliente General' }}</td>
+                            <td>${{ number_format($venta->total, 2) }}</td>
+                            <td>{{ ucfirst($venta->metodo_pago) }}</td>
+                            <td>{{ $venta->created_at->format('d/m/Y H:i:s') }}</td>
+                            <td>
+                                <ul class="list-unstyled mb-0">
+                                    @foreach($venta->items as $item)
+                                        <li>
+                                            {{ $item->cantidad }} x {{ $item->producto->nombre }} 
+                                            (${{ number_format($item->precio_unitario, 2) }})
+                                        </li>
+                                    @endforeach
+                                </ul>
+                            </td>
+                            
+                            {{-- // --- INICIO CAMBIO ADMIN --- // --}}
+                            @if(Auth::user()->role === 'admin')
+                            <td>
+                                {{-- Tu ruta de eliminar venta es API (apiDestroy), no WEB --}}
+                                <form action="{{-- route('ventas.destroy', $venta) --}}" method="POST" class="d-inline" onsubmit="return confirm('¿Estás seguro de que deseas eliminar esta venta? Esta acción ajustará el stock de vuelta.');">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="btn btn-sm btn-danger" title="Eliminar Venta" disabled>
+                                        <i class="fas fa-trash"></i> (API)
+                                    </button>
+                                </form>
+                                <small class="text-muted d-block">Gestión vía API TPV</small>
+                            </td>
+                            @endif
+                            {{-- // --- FIN CAMBIO ADMIN --- // --}}
+                        </tr>
+                        @empty
+                        <tr>
+                            {{-- Ajustamos el colspan dinámicamente --}}
+                            <td colspan="@if(Auth::user()->role === 'admin') 7 @else 6 @endif" class="text-center text-muted">No hay ventas registradas.</td>
+                        </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="d-flex justify-content-center">
+                 {{ $ventas->links() }}
+            </div>
+        </div>
     </div>
 </div>
 @endsection
