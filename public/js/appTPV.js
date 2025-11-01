@@ -17,15 +17,11 @@ function appTPV() {
         proveedorSeleccionado: null,
         apartados: [],
         
-        // --- INICIO CAMBIO PAGINACIÓN ---
+        // --- INICIO REVERSIÓN (Quitamos Paginación) ---
         ventas: [],
-        ventasTotalAmount: 0, // Esto será el total de la PÁGINA
-        ventasPaginacion: {
-            current_page: 1,
-            last_page: 1,
-            total: 0
-        },
-        // --- FIN CAMBIO PAGINACIÓN ---
+        ventasTotalCount: 0,
+        ventasTotalAmount: 0,
+        // --- FIN REVERSIÓN ---
         
         productoEditando: { id: null, nombre: '', precio: null, existencias: null },
         apartadoEditando: { id: null, nombre_cliente: '', monto_total: 0, monto_pagado: 0, fecha_vencimiento: '', estado: 'vigente' },
@@ -134,23 +130,15 @@ function appTPV() {
             this.apartados = data.sort((a, b) => a.id - b.id);
         },
         
-        // --- INICIO CAMBIO PAGINACIÓN ---
-        async obtenerVentas(page = 1) {
-            // Pedimos la página específica
-            const data = await this.fetchAPI(`/ventas?page=${page}`);
-            
-            // data ahora es { paginacion: {...}, montoTotalPagina: Y }
-            this.ventas = data.paginacion.data; // Ya vienen ordenadas por fecha desde el backend
-            this.ventasTotalAmount = data.montoTotalPagina;
-            
-            // Guardamos la info de paginación
-            this.ventasPaginacion = {
-                current_page: data.paginacion.current_page,
-                last_page: data.paginacion.last_page,
-                total: data.paginacion.total
-            };
+        // --- INICIO REVERSIÓN (Quitamos Paginación) ---
+        async obtenerVentas() {
+            const data = await this.fetchAPI('/ventas');
+            // data ahora es { ventas: [...], totalVentas: X, montoTotal: Y }
+            this.ventas = data.ventas.sort((a, b) => a.id - b.id); // Re-ordenamos por ID como estaba
+            this.ventasTotalCount = data.totalVentas;
+            this.ventasTotalAmount = data.montoTotal;
         },
-        // --- FIN CAMBIO PAGINACIÓN ---
+        // --- FIN REVERSIÓN ---
         
         async guardarNuevoCliente() {
             try {
@@ -210,24 +198,15 @@ function appTPV() {
                 if (pestaña === 'Estadísticas') await this.obtenerEstadisticas();
                 if (pestaña === 'Proveedores') await this.obtenerProveedores();
                 if (pestaña === 'Apartados') await this.obtenerApartados();
-                // --- INICIO CAMBIO PAGINACIÓN (Pedir página 1 al cambiar) ---
-                if (pestaña === 'Ventas') await this.obtenerVentas(1); 
-                // --- FIN CAMBIO PAGINACIÓN ---
+                // --- INICIO REVERSIÓN (Quitamos Paginación) ---
+                if (pestaña === 'Ventas') await this.obtenerVentas();
+                // --- FIN REVERSIÓN ---
             } catch (error) { /* Ya notificado */ }
         },
         
-        // --- INICIO CAMBIO PAGINACIÓN (Nuevas funciones) ---
-        async ventasPaginaSiguiente() {
-            if (this.ventasPaginacion.current_page < this.ventasPaginacion.last_page) {
-                await this.obtenerVentas(this.ventasPaginacion.current_page + 1);
-            }
-        },
-        async ventasPaginaAnterior() {
-            if (this.ventasPaginacion.current_page > 1) {
-                await this.obtenerVentas(this.ventasPaginacion.current_page - 1);
-            }
-        },
-        // --- FIN CAMBIO PAGINACIÓN ---
+        // --- INICIO REVERSIÓN (Quitamos Paginación) ---
+        // Se eliminan las funciones ventasPaginaSiguiente() y ventasPaginaAnterior()
+        // --- FIN REVERSIÓN ---
 
         iniciarEdicionProducto(producto) {
             this.productoEditando = { ...producto }; 
@@ -458,7 +437,7 @@ function appTPV() {
                 });
                 this.notificar(data.message || 'Método de pago actualizado.');
                 this.modalActivo = null;
-                await this.obtenerVentas(this.ventasPaginacion.current_page); // Recargar la página actual
+                await this.obtenerVentas(); // Recargar la lista
             } catch (error) { /* Ya notificado */ }
         },
         confirmarEliminarVenta(id) {
@@ -470,7 +449,7 @@ function appTPV() {
             try {
                 const data = await this.fetchAPI(`/ventas/${id}`, { method: 'DELETE' });
                 this.notificar(data.message || 'Venta eliminada.');
-                await this.obtenerVentas(this.ventasPaginacion.current_page); // Recargar la página actual
+                await this.obtenerVentas(); // Recargar la lista
                 await this.obtenerEstadisticas();
             } catch (error) { /* Ya notificado */ }
         },

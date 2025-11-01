@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http/Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Venta;
@@ -76,26 +76,29 @@ class VentaController extends Controller
     }
 
     /**
-     * Muestra la lista de ventas para el panel TPV (PAGINADA).
+     * Muestra la lista de ventas para el panel TPV.
      */
-    // --- INICIO CAMBIO PAGINACIÓN ---
-    public function apiIndex(Request $request)
+    // --- INICIO REVERSIÓN (Quitamos Paginación) ---
+    public function apiIndex()
     {
-        // Paginamos las ventas, 15 por página. 'orderByDesc' cumple "por fecha".
-        $ventasPaginadas = Venta::with('cliente')
-                                ->orderByDesc('created_at')
-                                ->paginate(15); // 15 ventas por página
+        // Volvemos a tomar solo las 50 más recientes
+        $ventas = Venta::with('cliente')
+                        ->orderByDesc('created_at')
+                        ->take(50)
+                        ->get();
                         
-        // Calcular el monto total de las ventas SÓLO de esta página
-        $montoTotalPagina = $ventasPaginadas->sum('monto_total');
+        // Calcular totales basados en esas 50 ventas
+        $totalVentas = $ventas->count();
+        $montoTotal = $ventas->sum('monto_total');
 
         // Devolver un objeto estructurado
         return response()->json([
-            'paginacion' => $ventasPaginadas,
-            'montoTotalPagina' => $montoTotalPagina // Total de la página actual
+            'ventas' => $ventas,
+            'totalVentas' => $totalVentas,
+            'montoTotal' => $montoTotal
         ]);
     }
-    // --- FIN CAMBIO PAGINACIÓN ---
+    // --- FIN REVERSIÓN ---
 
     /**
      * Actualiza el método de pago de una venta.

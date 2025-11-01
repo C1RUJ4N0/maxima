@@ -1,43 +1,37 @@
 @extends('layouts.guest')
 
-@section('title', 'Restablecer contraseña - Maxima POS')
-
 @section('content')
-<div class="min-h-screen flex items-center justify-center bg-gray-100">
-    <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
-        <h1 class="text-2xl font-bold text-gray-800 mb-4 text-center">Restablecer contraseña</h1>
+    <div class="mb-4 text-xl font-bold text-center text-sky-800">Restablecer Contraseña</div>
 
-        <form method="POST" action="{{ route('password.update') }}">
-            @csrf
-            <input type="hidden" name="token" value="{{ $token }}">
-
-            <label class="block mb-2 text-gray-700">Correo electrónico</label>
-            <input type="email" name="email" required value="{{ $email ?? old('email') }}"
-                   class="w-full px-4 py-2 mb-4 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500 @error('email') border-red-500 @enderror">
-            @error('email')
-                <p class="text-red-500 text-xs mb-2">{{ $message }}</p>
-            @enderror
-
-            <label class="block mb-2 text-gray-700">Nueva contraseña</label>
-            <input type="password" name="password" required
-                   class="w-full px-4 py-2 mb-4 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500 @error('password') border-red-500 @enderror">
-            @error('password')
-                <p class="text-red-500 text-xs mb-2">{{ $message }}</p>
-            @enderror
-
-            <label class="block mb-2 text-gray-700">Confirmar contraseña</label>
-            <input type="password" name="password_confirmation" required
-                   class="w-full px-4 py-2 mb-4 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
-
-            <button type="submit"
-                    class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition">
-                Restablecer contraseña
-            </button>
-        </form>
-
-        <div class="mt-4 text-center">
-            <a href="{{ route('login') }}" class="text-blue-600 hover:underline">Volver al login</a>
+    @error('email')
+        <div class="mb-4 font-medium text-sm text-red-600">
+            {{ $message }}
         </div>
-    </div>
-</div>
+    @enderror
+
+    <form method="POST" action="{{ route('password.update') }}">
+        @csrf
+        <input type="hidden" name="token" value="{{ $token }}">
+
+        <div class="mb-4">
+            <label for="email" class="block text-gray-700 text-sm font-bold mb-2">Dirección de Email</label>
+            <input id="email" type="email" class="block mt-1 w-full border-gray-300 focus:border-sky-500 focus:ring-sky-500 rounded-md shadow-sm" name="email" value="{{ $email ?? old('email') }}" required autocomplete="email" autofocus>
+        </div>
+
+        <div class="mb-4">
+            <label for="password" class="block text-gray-700 text-sm font-bold mb-2">Contraseña</dlabel>
+            <input id="password" type="password" class="block mt-1 w-full border-gray-300 focus:border-sky-500 focus:ring-sky-500 rounded-md shadow-sm" name="password" required autocomplete="new-password">
+        </div>
+
+        <div class="mb-6">
+            <label for="password-confirm" class="block text-gray-700 text-sm font-bold mb-2">Confirmar Contraseña</label>
+            <input id="password-confirm" type="password" class="block mt-1 w-full border-gray-300 focus:border-sky-500 focus:ring-sky-500 rounded-md shadow-sm" name="password_confirmation" required autocomplete="new-password">
+        </div>
+
+        <div class="flex items-center justify-end">
+            <button type="submit" class="inline-flex items-center px-4 py-2 bg-sky-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-sky-700 active:bg-sky-900 focus:outline-none focus:border-sky-900 focus:ring focus:ring-sky-300 disabled:opacity-25 transition">
+                Restablecer Contraseña
+            </button>
+        </div>
+    </form>
 @endsection

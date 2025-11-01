@@ -1,42 +1,34 @@
 @extends('layouts.guest')
 
 @section('content')
-<div class="container mx-auto">
-    <div class="flex justify-center">
-        <div class="w-full max-w-md">
-            <div class="bg-white shadow-md rounded-lg px-8 pt-6 pb-8 mb-4">
-                <div class="mb-4 text-xl font-bold text-center">{{ __('Confirm Password') }}</div>
+    <div class="mb-4 text-xl font-bold text-center text-sky-800">Confirmar Contraseña</div>
 
-                <p class="text-gray-700 mb-4">
-                    {{ __('Please confirm your password before continuing.') }}
-                </p>
+    <p class="text-gray-700 mb-4">
+        Por favor, confirma tu contraseña antes de continuar.
+    </p>
 
-                <form method="POST" action="{{ route('password.confirm') }}">
-                    @csrf
+    <form method="POST" action="{{ route('password.confirm') }}">
+        @csrf
 
-                    <div class="mb-4">
-                        <label for="password" class="block text-gray-700 text-sm font-bold mb-2">{{ __('Password') }}</label>
-                        <input id="password" type="password" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline @error('password') border-red-500 @enderror" name="password" required autocomplete="current-password">
-                        
-                        @error('password')
-                            <p class="text-red-500 text-xs italic mt-2">{{ $message }}</p>
-                        @enderror
-                    </div>
-
-                    <div class="flex items-center justify-between">
-                        <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
-                            {{ __('Confirm Password') }}
-                        </button>
-
-                        @if (Route::has('password.request'))
-                            <a class="inline-block align-baseline font-bold text-sm text-blue-500 hover:text-blue-800" href="{{ route('password.request') }}">
-                                {{ __('Forgot Your Password?') }}
-                            </a>
-                        @endif
-                    </div>
-                </form>
-            </div>
+        <div class="mb-4">
+            <label for="password" class="block text-gray-700 text-sm font-bold mb-2">Contraseña</label>
+            <input id="password" type="password" class="block mt-1 w-full border-gray-300 focus:border-sky-500 focus:ring-sky-500 rounded-md shadow-sm" name="password" required autocomplete="current-password">
+            
+            @error('password')
+                <p class="text-red-500 text-xs italic mt-2">{{ $message }}</p>
+            @enderror
         </div>
-    </div>
-</div>
+
+        <div class="flex items-center justify-between">
+            <button type="submit" class="inline-flex items-center px-4 py-2 bg-sky-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-sky-700 active:bg-sky-900 focus:outline-none focus:border-sky-900 focus:ring focus:ring-sky-300 disabled:opacity-25 transition">
+                Confirmar Contraseña
+            </button>
+
+            @if (Route::has('password.request'))
+                <a class="underline text-sm text-sky-600 hover:text-sky-900" href="{{ route('password.request') }}">
+                    ¿Olvidaste tu contraseña?
+                </a>
+            @endif
+        </div>
+    </form>
 @endsection

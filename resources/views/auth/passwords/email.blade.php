@@ -1,39 +1,32 @@
 @extends('layouts.guest')
 
-@section('title', 'Recuperar contraseña - Maxima POS')
-
 @section('content')
-<div class="min-h-screen flex items-center justify-center bg-gray-100">
-    <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
-        <h1 class="text-2xl font-bold text-gray-800 mb-4 text-center">Recuperar contraseña</h1>
-        <p class="text-sm text-gray-600 mb-6 text-center">Ingresa tu correo para recibir el link de recuperación</p>
+    <div class="mb-4 text-xl font-bold text-center text-sky-800">Restablecer Contraseña</div>
 
-        @if (session('status'))
-            <div class="bg-green-100 text-green-700 p-2 rounded mb-4 text-center">
-                {{ session('status') }}
-            </div>
-        @endif
-
-        <form method="POST" action="{{ route('password.email') }}">
-            @csrf
-
-            <label class="block mb-2 text-gray-700">Correo electrónico</label>
-            <input type="email" name="email" required
-                   class="w-full px-4 py-2 mb-4 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500 @error('email') border-red-500 @enderror"
-                   value="{{ old('email') }}">
-            @error('email')
-                <p class="text-red-500 text-xs mb-2">{{ $message }}</p>
-            @enderror
-
-            <button type="submit"
-                    class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition">
-                Enviar link de recuperación
-            </button>
-        </form>
-
-        <div class="mt-4 text-center">
-            <a href="{{ route('login') }}" class="text-blue-600 hover:underline">Volver al login</a>
+    @if (session('status'))
+        <div class="mb-4 font-medium text-sm text-green-600">
+            {{ session('status') }}
         </div>
-    </div>
-</div>
+    @endif
+
+    @error('email')
+        <div class="mb-4 font-medium text-sm text-red-600">
+            {{ $message }}
+        </div>
+    @enderror
+
+    <form method="POST" action="{{ route('password.email') }}">
+        @csrf
+
+        <div class="mb-4">
+            <label for="email" class="block text-gray-700 text-sm font-bold mb-2">Dirección de Email</label>
+            <input id="email" type="email" class="block mt-1 w-full border-gray-300 focus:border-sky-500 focus:ring-sky-500 rounded-md shadow-sm" name="email" value="{{ old('email') }}" required autocomplete="email" autofocus>
+        </div>
+
+        <div class="flex items-center justify-end mt-4">
+            <button type="submit" class="inline-flex items-center px-4 py-2 bg-sky-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-sky-700 active:bg-sky-900 focus:outline-none focus:border-sky-900 focus:ring focus:ring-sky-300 disabled:opacity-25 transition">
+                Enviar Enlace de Restablecimiento
+            </button>
+        </div>
+    </form>
 @endsection

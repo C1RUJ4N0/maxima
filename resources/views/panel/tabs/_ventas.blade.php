@@ -1,5 +1,5 @@
 <div x-show="pestañaActiva === 'Ventas'" class="bg-sky-50 p-6 rounded-lg shadow-xl max-w-7xl mx-auto">
-    <h2 class="text-xl font-bold mb-4">Registro de Ventas Recientes (Por Fecha)</h2>
+    <h2 class="text-xl font-bold mb-4">Registro de Ventas Recientes</h2>
     <div class="overflow-x-auto">
         <table class="w-full text-sm">
             <thead class="text-xs uppercase bg-sky-100"> 
@@ -43,42 +43,25 @@
                     <tr><td colspan="6" class="text-center p-8 text-gray-500">No hay ventas registradas recientemente.</td></tr>
                 </template>
             </tbody>
+            
+            {{-- --- INICIO REVERSIÓN (Volvemos al footer original) --- --}}
             <tfoot class="bg-sky-100 border-t-2 border-sky-200">
                 <tr class="font-semibold text-sm">
-                    <td class="px-6 py-4 text-right" colspan="2">Total (Pág.):</td>
+                    <td class="px-6 py-4 text-right" colspan="2">Total de Ventas (Recientes):</td>
                     {{-- Columna para el Monto Total --}}
                     <td class="px-6 py-4 font-bold" x-text="`$${parseFloat(ventasTotalAmount).toFixed(2)}`"></td>
-                    <td class="px-6 py-4 text-right">Total (General):</td>
+                    <td class="px-6 py-4 text-right">Total Items:</td>
                     {{-- Columna para el Count Total --}}
-                    <td class="px-6 py-4 font-bold" x-text="ventasPaginacion.total"></td>
+                    <td class="px-6 py-4 font-bold" x-text="ventasTotalCount"></td>
                     <td class="px-6 py-4"></td> {{-- Columna de acciones vacía --}}
                 </tr>
             </tfoot>
+            {{-- --- FIN REVERSIÓN --- --}}
+
         </table>
     </div>
 
-    {{-- --- INICIO CAMBIO CONTROLES DE PAGINACIÓN --- --}}
-    <div classs="flex justify-between items-center mt-4 pt-4 border-t">
-        <div class="flex gap-2">
-            <button 
-                @click="ventasPaginaAnterior()" 
-                :disabled="ventasPaginacion.current_page <= 1"
-                class="px-4 py-2 bg-sky-600 text-white rounded-lg disabled:bg-gray-400">
-                <i class="fas fa-arrow-left mr-2"></i> Anterior
-            </button>
-            <button 
-                @click="ventasPaginaSiguiente()" 
-                :disabled="ventasPaginacion.current_page >= ventasPaginacion.last_page"
-                class="px-4 py-2 bg-sky-600 text-white rounded-lg disabled:bg-gray-400">
-                Siguiente <i class="fas fa-arrow-right ml-2"></i>
-            </button>
-        </div>
-        <div class="text-sm text-gray-600">
-            Página <span x-text="ventasPaginacion.current_page" class="font-bold"></span>
-            de <span x-text="ventasPaginacion.last_page" class="font-bold"></span>
-            (Total: <span x-text="ventasPaginacion.total" class="font-bold"></span> ventas)
-        </div>
-    </div>
-    {{-- --- FIN CAMBIO CONTROLES DE PAGINACIÓN --- --}}
+    {{-- --- INICIO REVERSIÓN (Quitamos Paginación) --- --}}
+    {{-- --- FIN REVERSIÓN --- --}}
 
 </div>
