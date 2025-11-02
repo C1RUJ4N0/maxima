@@ -86,7 +86,9 @@ pipeline {
                     script {
                         // A. Reemplazar la imagen en el JSON con el nuevo tag
                         echo "Actualizando task-definition.json con el nuevo tag: ${IMAGE_TAG}"
-                        sh "sed -i '' 's|${ECR_REPO_NAME}:latest|${ECR_REPO_NAME}:${IMAGE_TAG}|g' task-definition.json"
+                        
+                        // CORRECCIÓN FINAL: Se elimina el argumento '' para GNU sed (Linux/Docker)
+                        sh "sed -i 's|${ECR_REPO_NAME}:latest|${ECR_REPO_NAME}:${IMAGE_TAG}|g' task-definition.json"
 
                         // B. Registrar la nueva revisión de la definición de tarea
                         echo "Registrando nueva revisión de tarea..."
