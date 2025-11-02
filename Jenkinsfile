@@ -68,20 +68,21 @@ pipeline {
                     [ $class: 'StringBinding', credentialsId: AWS_SECRET_KEY_CRED, variable: 'AWS_SECRET_ACCESS_KEY' ]
                 ]) {
                     script {
-                        // A. Reemplazar y LIMPIAR: Sustitución de tag y eliminación de '\r' (retorno de carro) de Windows.
+                        // A. Reemplazar y LIMPIAR: Sustitución de tag y eliminación de '\r' (retorno de carro)
                         echo "Actualizando y limpiando task-definition.json..."
-                        sh "sed -i 's|${ECR_REPO_NAME}:latest|${ECR_REPO_NAME}:${IMAGE_TAG}|g; s/\r$//g' task-definition.json"
+                        
+                        // CORRECCIÓN FINAL: Escapamos el '$' para Groovy (\$)
+                        sh "sed -i 's|${ECR_REPO_NAME}:latest|${ECR_REPO_NAME}:${IMAGE_TAG}|g; s/\r\$//g' task-definition.json"
 
                         // B. Registrar la nueva revisión de la definición de tarea
                         echo "Registrando nueva revisión de tarea..."
                         sh "aws ecs register-task-definition --cli-input-json file://task-definition.json --region ${AWS_REGION}"
                         
-                        // C. Actualizar el servicio ECS (USANDO LA ÚLTIMA REVISIÓN ACTIVA)
+                        // C. Actualizar el servicio ECS
                         echo "Forzando nuevo despliegue en servicio ${ECS_SERVICE}..."
-                        // Usamos solo el nombre de familia, lo que obliga a AWS a usar la revisión que acabamos de registrar.
                         sh "aws ecs update-service --cluster ${ECS_CLUSTER} --service ${ECS_SERVICE} --task-definition ${TASK_DEF_FAMILY} --region ${AWS_REGION}"
                         
-                        // D. Esperar a que el despliegue finalice (Opcional)
+                        // D. Esperar a que el despliegue finalice
                         echo "Esperando a que el servicio ${ECS_SERVICE} esté estable..."
                         sh "aws ecs wait services-stable --cluster ${ECS_CLUSTER} --services ${ECS_SERVICE} --region ${AWS_REGION}"
                     }
