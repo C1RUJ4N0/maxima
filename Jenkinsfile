@@ -16,7 +16,7 @@ pipeline {
         ECR_IMAGE_URI  = "${ECR_REGISTRY}/${ECR_REPO_NAME}:${IMAGE_TAG}"
         
         // ID de la Credencial de AWS almacenada en Jenkins
-        AWS_CREDENTIALS_ID = 'aws-jenkins-credentials' 
+        AWS_CREDENTIALS_ID = '3648b605-1bc3-4b5d-ac56-9b667b91381c' 
     }
 
     stages {
