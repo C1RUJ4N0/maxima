@@ -36,7 +36,7 @@ pipeline {
 
         stage('3. Push to ECR') {
             steps {
-                // Inyecta las claves de Secret Text como variables de entorno
+                // Inyecta las claves de Secret Text
                 withCredentials([
                     [ $class: 'StringBinding', credentialsId: AWS_ACCESS_ID_CRED, variable: 'AWS_ACCESS_KEY_ID' ],
                     [ $class: 'StringBinding', credentialsId: AWS_SECRET_KEY_CRED, variable: 'AWS_SECRET_ACCESS_KEY' ]
@@ -44,13 +44,11 @@ pipeline {
                     script {
                         echo "Obteniendo token de autenticación de ECR..."
                         
-                        // 1. Obtener token de autenticación de ECR
                         def ecrCredentials = sh(
                             script: "aws ecr get-login-password --region ${AWS_REGION}", 
                             returnStdout: true
                         ).trim()
 
-                        // 2. Login de Docker y Push
                         sh "echo ${ecrCredentials} | docker login --username AWS --password-stdin ${ECR_REGISTRY}"
                         sh "docker tag ${ECR_REPO_NAME}:${IMAGE_TAG} ${ECR_IMAGE_URI}"
                         echo "Subiendo imagen a ECR: ${ECR_IMAGE_URI}"
@@ -68,11 +66,10 @@ pipeline {
                     [ $class: 'StringBinding', credentialsId: AWS_SECRET_KEY_CRED, variable: 'AWS_SECRET_ACCESS_KEY' ]
                 ]) {
                     script {
-                        // A. Reemplazar y LIMPIAR: Sustitución de tag y eliminación de '\r' (retorno de carro)
                         echo "Actualizando y limpiando task-definition.json..."
                         
-                        // CORRECCIÓN FINAL: Escapamos el '$' para Groovy (\$)
-                        sh "sed -i 's|${ECR_REPO_NAME}:latest|${ECR_REPO_NAME}:${IMAGE_TAG}|g; s/\r\$//g' task-definition.json"
+                        // SOLUCIÓN DEFINITIVA: Limpieza de BOM, reemplazo de Tag y limpieza de CR (\r)
+                        sh "sed -i -e '1s/^\xEF\xBB\xBF//' -e 's|${ECR_REPO_NAME}:latest|${ECR_REPO_NAME}:${IMAGE_TAG}|g' -e 's/\r\$//g' task-definition.json"
 
                         // B. Registrar la nueva revisión de la definición de tarea
                         echo "Registrando nueva revisión de tarea..."
