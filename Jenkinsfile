@@ -7,8 +7,7 @@ pipeline {
         AWS_REGION     = 'us-east-1' 
         ECR_REPO_NAME  = 'maxima-app' 
         ECS_CLUSTER    = 'maxima-cluster'     
-        // ¡NOMBRE DE SERVICIO ACTUALIZADO!
-        ECS_SERVICE    = 'maxima-app-task-def-service-srg8a7n3' 
+        ECS_SERVICE    = 'maxima-app-task-def-service-srg8a7n3' // Nuevo nombre de servicio
         TASK_DEF_FAMILY = "maxima-app-task-def"
         
         // IDs de las Credenciales de Secret Text
@@ -39,27 +38,17 @@ pipeline {
             steps {
                 // Inyecta las claves de Secret Text como variables de entorno
                 withCredentials([
-                    [
-                        $class: 'StringBinding', 
-                        credentialsId: AWS_ACCESS_ID_CRED, 
-                        variable: 'AWS_ACCESS_KEY_ID'
-                    ],
-                    [
-                        $class: 'StringBinding', 
-                        credentialsId: AWS_SECRET_KEY_CRED, 
-                        variable: 'AWS_SECRET_ACCESS_KEY'
-                    ]
+                    [ $class: 'StringBinding', credentialsId: AWS_ACCESS_ID_CRED, variable: 'AWS_ACCESS_KEY_ID' ],
+                    [ $class: 'StringBinding', credentialsId: AWS_SECRET_KEY_CRED, variable: 'AWS_SECRET_ACCESS_KEY' ]
                 ]) {
                     script {
                         echo "Obteniendo token de autenticación de ECR..."
                         
-                        // 1. Obtener token de autenticación de ECR
                         def ecrCredentials = sh(
                             script: "aws ecr get-login-password --region ${AWS_REGION}", 
                             returnStdout: true
                         ).trim()
 
-                        // 2. Login de Docker y Push
                         sh "echo ${ecrCredentials} | docker login --username AWS --password-stdin ${ECR_REGISTRY}"
                         sh "docker tag ${ECR_REPO_NAME}:${IMAGE_TAG} ${ECR_IMAGE_URI}"
                         echo "Subiendo imagen a ECR: ${ECR_IMAGE_URI}"
@@ -73,31 +62,27 @@ pipeline {
             steps {
                 // Reaplicamos la inyección para el despliegue de ECS
                 withCredentials([
-                    [
-                        $class: 'StringBinding', 
-                        credentialsId: AWS_ACCESS_ID_CRED, 
-                        variable: 'AWS_ACCESS_KEY_ID'
-                    ],
-                    [
-                        $class: 'StringBinding', 
-                        credentialsId: AWS_SECRET_KEY_CRED, 
-                        variable: 'AWS_SECRET_ACCESS_KEY'
-                    ]
+                    [ $class: 'StringBinding', credentialsId: AWS_ACCESS_ID_CRED, variable: 'AWS_ACCESS_KEY_ID' ],
+                    [ $class: 'StringBinding', credentialsId: AWS_SECRET_KEY_CRED, variable: 'AWS_SECRET_ACCESS_KEY' ]
                 ]) {
                     script {
                         // A. Reemplazar la imagen en el JSON con el nuevo tag
                         echo "Actualizando task-definition.json con el nuevo tag: ${IMAGE_TAG}"
                         sh "sed -i 's|${ECR_REPO_NAME}:latest|${ECR_REPO_NAME}:${IMAGE_TAG}|g' task-definition.json"
 
-                        // B. Registrar la nueva revisión de la definición de tarea
+                        // B. LIMPIEZA CRÍTICA: Eliminar caracteres de retorno de carro de Windows (\r)
+                        echo "Limpiando formato de archivo JSON..."
+                        sh "tr -d '\\r' < task-definition.json > task-definition-clean.json" 
+
+                        // C. Registrar la nueva revisión de la definición de tarea (usando el archivo limpio)
                         echo "Registrando nueva revisión de tarea..."
-                        sh "aws ecs register-task-definition --cli-input-json file://task-definition.json --region ${AWS_REGION}"
+                        sh "aws ecs register-task-definition --cli-input-json file://task-definition-clean.json --region ${AWS_REGION}"
                         
-                        // C. Actualizar el servicio ECS (USANDO LA ÚLTIMA REVISIÓN ACTIVA)
+                        // D. Actualizar el servicio ECS (USANDO LA ÚLTIMA REVISIÓN ACTIVA)
                         echo "Forzando nuevo despliegue en servicio ${ECS_SERVICE}..."
                         sh "aws ecs update-service --cluster ${ECS_CLUSTER} --service ${ECS_SERVICE} --task-definition ${TASK_DEF_FAMILY} --region ${AWS_REGION}"
                         
-                        // D. Esperar a que el despliegue finalice (Opcional)
+                        // E. Esperar a que el despliegue finalice (Opcional)
                         echo "Esperando a que el servicio ${ECS_SERVICE} esté estable..."
                         sh "aws ecs wait services-stable --cluster ${ECS_CLUSTER} --services ${ECS_SERVICE} --region ${AWS_REGION}"
                     }
