@@ -35,21 +35,14 @@ pipeline {
 
         stage('3. Push to ECR') {
             steps {
-                // SINTAXIS CORREGIDA: Usamos 'bindings' con '$class' para resolver el error Groovy
-                withCredentials(
-                    bindings: [
-                        [
-                            $class: 'UsernamePasswordMultiBinding',
-                            credentialsId: AWS_CREDENTIALS_ID, 
-                            usernameVariable: 'AWS_ACCESS_KEY_ID', 
-                            passwordVariable: 'AWS_SECRET_ACCESS_KEY'
-                        ]
-                    ]
-                ) {
+                // SOLUCIÓN DEFINITIVA: Usa la directiva 'aws' para el tipo de credencial 'AWS Credentials'
+                withCredentials([
+                    aws(credentialsId: AWS_CREDENTIALS_ID)
+                ]) {
                     script {
                         echo "Obteniendo token de autenticación de ECR..."
                         
-                        // 1. Obtener token de autenticación de ECR (ahora usa las variables inyectadas)
+                        // 1. Obtener token de autenticación de ECR
                         def ecrCredentials = sh(
                             script: "aws ecr get-login-password --region ${AWS_REGION}", 
                             returnStdout: true
@@ -69,20 +62,14 @@ pipeline {
 
         stage('4. Deploy to ECS') {
             steps {
-                // SINTAXIS CORREGIDA: Reaplicada para el despliegue
-                withCredentials(
-                    bindings: [
-                        [
-                            $class: 'UsernamePasswordMultiBinding',
-                            credentialsId: AWS_CREDENTIALS_ID, 
-                            usernameVariable: 'AWS_ACCESS_KEY_ID', 
-                            passwordVariable: 'AWS_SECRET_ACCESS_KEY'
-                        ]
-                    ]
-                ) {
+                // Reaplicamos la directiva 'aws' para la etapa de despliegue
+                withCredentials([
+                    aws(credentialsId: AWS_CREDENTIALS_ID)
+                ]) {
                     script {
                         // A. Reemplazar la imagen en el JSON con el nuevo tag
                         echo "Actualizando task-definition.json con el nuevo tag: ${IMAGE_TAG}"
+                        // Nota: el sed -i '' es crucial en entornos basados en macOS (que usa /bin/sh)
                         sh "sed -i '' 's|${ECR_REPO_NAME}:latest|${ECR_REPO_NAME}:${IMAGE_TAG}|g' task-definition.json"
 
                         // B. Registrar la nueva revisión de la definición de tarea
