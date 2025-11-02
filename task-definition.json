@@ -3,14 +3,8 @@
     "networkMode": "awsvpc",
     "cpu": "256",
     "memory": "512",
-    
-    // --- ROL DE EJECUCIÓN (CORRECTO) ---
     "executionRoleArn": "arn:aws:iam::830099649054:role/ecsTaskExecutionRole",
-    
-    // --- ROL DE TAREA (CORREGIDO) ---
-    // Usamos el mismo rol de ejecución como rol de tarea.
     "taskRoleArn": "arn:aws:iam::830099649054:role/ecsTaskExecutionRole",
-    
     "requiresCompatibilities": [
         "FARGATE"
     ],
