@@ -47,7 +47,50 @@
                     "awslogs-region": "us-east-1",
                     "awslogs-stream-prefix": "ecs"
                 }
-            }
+            },
+            
+            "environment": [
+                {
+                    "name": "APP_NAME",
+                    "value": "Maxima"
+                },
+                {
+                    "name": "APP_ENV",
+                    "value": "production"
+                },
+                {
+                    "name": "APP_DEBUG",
+                    "value": "false"
+                },
+                {
+                    "name": "APP_KEY",
+                    "value": "base64:NcjnzRgt4GMLcIkpWJv85YYJ0NtiuJ8al3FoG66tToU="
+                },
+                {
+                    "name": "APP_URL",
+                    "value": "http://localhost"
+                },
+                {
+                    "name": "LOG_CHANNEL",
+                    "value": "stack"
+                },
+                {
+                    "name": "DB_CONNECTION",
+                    "value": "mysql"
+                },
+                {
+                    "name": "SESSION_DRIVER",
+                    "value": "file"
+                },
+                {
+                    "name": "CACHE_DRIVER",
+                    "value": "file"
+                },
+                {
+                    "name": "QUEUE_CONNECTION",
+                    "value": "sync"
+                }
+            ]
         }
     ]
 }
