@@ -64,7 +64,7 @@
                 },
                 {
                     "name": "APP_KEY",
-                    "value": "PEGA_AQUÍ_TU_APP_KEY_GENERADA (usa php artisan key:generate --show)"
+                    "value": "base64:BmGC4EIxGH+dtY8yM66jykBKn4tv0gNgoWM2yY4zJV4="
                 },
                 {
                     "name": "APP_URL",
@@ -82,7 +82,7 @@
                 },
                 {
                     "name": "DB_HOST",
-                    "value": "PEGA_AQUÍ_EL_ENDPOINT_DE_TU_RDS"
+                    "value": "maxima-db.c0lsyi000mcg.us-east-1.rds.amazonaws.com"
                 },
                 {
                     "name": "DB_PORT",
