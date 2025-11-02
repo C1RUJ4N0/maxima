@@ -59,12 +59,12 @@
                     "value": "production"
                 },
                 {
-                    "name": "APP_KEY",
-                    "value": "base64:iAi+pt+EB1xeVue0JSzzmf7/usUBPF5vOWLCK1df6a8="
-                },
-                {
                     "name": "APP_DEBUG",
                     "value": "false"
+                },
+                {
+                    "name": "APP_KEY",
+                    "value": "base64:q00JDlFDpkfKkPenTy+27w1uUwgYg/SjRa5TxIRn+ig="
                 },
                 {
                     "name": "APP_URL",
@@ -72,8 +72,9 @@
                 },
                 {
                     "name": "LOG_CHANNEL",
-                    "value": "stderr"
+                    "value": "stack"
                 },
+                
                 
                 {
                     "name": "DB_CONNECTION",
@@ -81,7 +82,7 @@
                 },
                 {
                     "name": "DB_HOST",
-                    "value": "REEMPLAZAR_CON_TU_ENDPOINT_DE_AWS_RDS"
+                    "value": "maxima-db.c0lsyi000mcg.us-east-1.rds.amazonaws.com"
                 },
                 {
                     "name": "DB_PORT",
@@ -89,61 +90,15 @@
                 },
                 {
                     "name": "DB_DATABASE",
-                    "value": "REEMPLAZAR_CON_TU_NOMBRE_DE_BD_RDS"
+                    "value": "laravel_pos"
                 },
                 {
                     "name": "DB_USERNAME",
-                    "value": "REEMPLAZAR_CON_TU_USUARIO_RDS"
+                    "value": "laraveluser"
                 },
                 {
                     "name": "DB_PASSWORD",
-                    "value": "REEMPLAZAR_CON_TU_PASSWORD_RDS"
-                },
-
-                {
-                    "name": "MAIL_MAILER",
-                    "value": "smtp"
-                },
-                {
-                    "name": "MAIL_HOST",
-                    "value": "mailpit"
-                },
-                {
-                    "name": "MAIL_PORT",
-                    "value": "1025"
-                },
-                {
-                    "name": "MAIL_USERNAME",
-                    "value": "null"
-                },
-                {
-                    "name": "MAIL_PASSWORD",
-                    "value": "null"
-                },
-                {
-                    "name": "MAIL_ENCRYPTION",
-                    "value": "null"
-                },
-                {
-                    "name": "MAIL_FROM_ADDRESS",
-                    "value": "hello@example.com"
-                },
-                {
-                    "name": "MAIL_FROM_NAME",
-                    "value": "Maxima"
-                },
-
-                {
-                    "name": "SESSION_DRIVER",
-                    "value": "file"
-                },
-                {
-                    "name": "CACHE_DRIVER",
-                    "value": "file"
-                },
-                {
-                    "name": "QUEUE_CONNECTION",
-                    "value": "sync"
+                    "value": "password"
                 }
             ]
         }
