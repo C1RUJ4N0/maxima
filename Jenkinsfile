@@ -7,7 +7,8 @@ pipeline {
         AWS_REGION     = 'us-east-1' 
         ECR_REPO_NAME  = 'maxima-app' 
         ECS_CLUSTER    = 'maxima-cluster'     
-        ECS_SERVICE    = 'maxima-app-task-def-service-etjvk2u9' 
+        // ¡NOMBRE DE SERVICIO ACTUALIZADO!
+        ECS_SERVICE    = 'maxima-app-task-def-service-srg8a7n3' 
         TASK_DEF_FAMILY = "maxima-app-task-def"
         
         // IDs de las Credenciales de Secret Text
@@ -86,7 +87,6 @@ pipeline {
                     script {
                         // A. Reemplazar la imagen en el JSON con el nuevo tag
                         echo "Actualizando task-definition.json con el nuevo tag: ${IMAGE_TAG}"
-                        // CORRECCIÓN DE SYNTAX DE SED
                         sh "sed -i 's|${ECR_REPO_NAME}:latest|${ECR_REPO_NAME}:${IMAGE_TAG}|g' task-definition.json"
 
                         // B. Registrar la nueva revisión de la definición de tarea
