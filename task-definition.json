@@ -1,8 +1,8 @@
 {
     "family": "maxima-app-task-def",
     "networkMode": "awsvpc",
-    "cpu": "256",
-    "memory": "512",
+    "cpu": "512",
+    "memory": "1024",
     "executionRoleArn": "arn:aws:iam::830099649054:role/ecsTaskExecutionRole",
     "taskRoleArn": "arn:aws:iam::830099649054:role/ecsTaskExecutionRole",
     "requiresCompatibilities": [
@@ -10,13 +10,33 @@
     ],
     "containerDefinitions": [
         {
-            "name": "maxima-app-container",
-            "image": "830099649054.dkr.ecr.us-east-1.amazonaws.com/maxima-app:latest",
+            "name": "maxima-nginx-container",
+            "image": "830099649054.dkr.ecr.us-east-1.amazonaws.com/maxima-nginx:latest",
             "essential": true,
             "portMappings": [
                 {
                     "containerPort": 80,
                     "hostPort": 80,
+                    "protocol": "tcp"
+                }
+            ],
+            "logConfiguration": {
+                "logDriver": "awslogs",
+                "options": {
+                    "awslogs-group": "/ecs/maxima-nginx",
+                    "awslogs-region": "us-east-1",
+                    "awslogs-stream-prefix": "ecs"
+                }
+            }
+        },
+        {
+            "name": "maxima-app-container",
+            "image": "830099649054.dkr.ecr.us-east-1.amazonaws.com/maxima-app:latest",
+            "essential": true,
+            "portMappings": [
+                {
+                    "containerPort": 9000,
+                    "hostPort": 9000,
                     "protocol": "tcp"
                 }
             ],
