@@ -10,8 +10,7 @@ pipeline {
         ECS_SERVICE    = 'maxima-app-task-def-service-etjvk2u9' 
         TASK_DEF_FAMILY = "maxima-app-task-def"
         
-        // ID de la Credencial de AWS almacenada en Jenkins.
-        // ¡DEBE COINCIDIR CON EL ID REAL DE TU CREDENCIAL!
+        // ID de la Credencial de AWS. Usamos el UUID: 3648b605-1bc3-4b5d-ac56-9b667b91381c
         AWS_CREDENTIALS_ID = '3648b605-1bc3-4b5d-ac56-9b667b91381c' 
         
         // Variables generadas
@@ -36,15 +35,17 @@ pipeline {
 
         stage('3. Push to ECR') {
             steps {
-                // Bloque CRÍTICO: Inyecta las claves como variables de entorno (AWS CLI estándar)
-                withCredentials([
-                    [
-                        class: 'com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl',
-                        credentialsId: AWS_CREDENTIALS_ID, 
-                        usernameVariable: 'AWS_ACCESS_KEY_ID', // Mapeado al Access Key ID
-                        passwordVariable: 'AWS_SECRET_ACCESS_KEY' // Mapeado al Secret Access Key
+                // SINTAXIS CORREGIDA: Usamos 'bindings' con '$class' para resolver el error Groovy
+                withCredentials(
+                    bindings: [
+                        [
+                            $class: 'UsernamePasswordMultiBinding',
+                            credentialsId: AWS_CREDENTIALS_ID, 
+                            usernameVariable: 'AWS_ACCESS_KEY_ID', 
+                            passwordVariable: 'AWS_SECRET_ACCESS_KEY'
+                        ]
                     ]
-                ]) {
+                ) {
                     script {
                         echo "Obteniendo token de autenticación de ECR..."
                         
@@ -68,15 +69,17 @@ pipeline {
 
         stage('4. Deploy to ECS') {
             steps {
-                // Volvemos a inyectar las credenciales para el despliegue de ECS
-                withCredentials([
-                    [
-                        class: 'com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl',
-                        credentialsId: AWS_CREDENTIALS_ID, 
-                        usernameVariable: 'AWS_ACCESS_KEY_ID', 
-                        passwordVariable: 'AWS_SECRET_ACCESS_KEY'
+                // SINTAXIS CORREGIDA: Reaplicada para el despliegue
+                withCredentials(
+                    bindings: [
+                        [
+                            $class: 'UsernamePasswordMultiBinding',
+                            credentialsId: AWS_CREDENTIALS_ID, 
+                            usernameVariable: 'AWS_ACCESS_KEY_ID', 
+                            passwordVariable: 'AWS_SECRET_ACCESS_KEY'
+                        ]
                     ]
-                ]) {
+                ) {
                     script {
                         // A. Reemplazar la imagen en el JSON con el nuevo tag
                         echo "Actualizando task-definition.json con el nuevo tag: ${IMAGE_TAG}"
