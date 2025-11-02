@@ -52,7 +52,7 @@ pipeline {
                     script {
                         echo "Obteniendo token de autenticación de ECR..."
                         
-                        // 1. Obtener token de autenticación de ECR (AWS CLI encuentra las variables)
+                        // 1. Obtener token de autenticación de ECR
                         def ecrCredentials = sh(
                             script: "aws ecr get-login-password --region ${AWS_REGION}", 
                             returnStdout: true
@@ -86,17 +86,16 @@ pipeline {
                     script {
                         // A. Reemplazar la imagen en el JSON con el nuevo tag
                         echo "Actualizando task-definition.json con el nuevo tag: ${IMAGE_TAG}"
-                        
-                        // CORRECCIÓN FINAL: Se elimina el argumento '' para GNU sed (Linux/Docker)
+                        // CORRECCIÓN DE SYNTAX DE SED
                         sh "sed -i 's|${ECR_REPO_NAME}:latest|${ECR_REPO_NAME}:${IMAGE_TAG}|g' task-definition.json"
 
                         // B. Registrar la nueva revisión de la definición de tarea
                         echo "Registrando nueva revisión de tarea..."
                         sh "aws ecs register-task-definition --cli-input-json file://task-definition.json --region ${AWS_REGION}"
                         
-                        // C. Actualizar el servicio ECS
+                        // C. Actualizar el servicio ECS (USANDO LA ÚLTIMA REVISIÓN ACTIVA)
                         echo "Forzando nuevo despliegue en servicio ${ECS_SERVICE}..."
-                        sh "aws ecs update-service --cluster ${ECS_CLUSTER} --service ${ECS_SERVICE} --task-definition ${TASK_DEF_FAMILY}:${IMAGE_TAG} --region ${AWS_REGION}"
+                        sh "aws ecs update-service --cluster ${ECS_CLUSTER} --service ${ECS_SERVICE} --task-definition ${TASK_DEF_FAMILY} --region ${AWS_REGION}"
                         
                         // D. Esperar a que el despliegue finalice (Opcional)
                         echo "Esperando a que el servicio ${ECS_SERVICE} esté estable..."
