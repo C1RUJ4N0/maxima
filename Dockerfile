@@ -3,21 +3,19 @@ FROM composer:2.7 as vendor
 WORKDIR /app
 COPY database/ database/
 COPY composer.json composer.lock ./
+
+# --- ARREGLO: Instalar la extensión bcmath que falta ---
+RUN docker-php-ext-install bcmath
+
 # --no-scripts evita el error de "artisan not found"
 RUN composer install --no-interaction --no-dev --optimize-autoloader --no-scripts
 
-# Stage 2: Construir los assets de Node.js
-FROM node:20-alpine as node
-WORKDIR /app
-COPY package.json package-lock.json ./
-RUN npm install
-COPY . .
-RUN npm run build
+# --- ARREGLO 2: ELIMINAMOS EL "STAGE 2" DE NODE/VITE PORQUE NO SE USA ---
 
 # Stage 3: Crear la imagen final de PHP-FPM
 FROM php:8.3-fpm-alpine
 
-# Instalar dependencias del sistema, incluyendo "oniguruma-dev"
+# Instalar dependencias del sistema
 RUN apk add --no-cache \
     mysql-client \
     zip \
@@ -28,9 +26,10 @@ RUN apk add --no-cache \
     jpeg-dev \
     freetype-dev \
     libxml2-dev \
-    oniguruma-dev
+    oniguruma-dev \
+    fcgi # <-- ESTA ES LA CORRECCIÓN (era fcgi-bin)
 
-# Instalar extensiones de PHP
+# Instalar extensiones de PHP (bcmath también se necesita aquí)
 RUN docker-php-ext-install pdo pdo_mysql mbstring exif pcntl bcmath gd zip dom xml
 
 WORKDIR /var/www/html
@@ -38,11 +37,10 @@ WORKDIR /var/www/html
 # Copiar archivos de la aplicación
 COPY . .
 
-# Copiar dependencias de Composer y Node desde los stages anteriores
+# Copiar dependencias de Composer desde el stage anterior
 COPY --from=vendor /app/vendor/ /var/www/html/vendor/
-COPY --from=node /app/public/build/ /var/www/html/public/build/
 
-# Configurar permisos (CORRECCIÓN CLAVE)
+# Configurar permisos
 RUN chown -R www-data:www-data /var/www/html
 RUN chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 

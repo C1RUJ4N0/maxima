@@ -36,12 +36,11 @@
     {{-- Se eliminó bg-gray-100 para usar el fondo del body --}}
     <div class="min-h-screen flex flex-col sm:justify-center items-center pt-6 sm:pt-0">
         <div>
+            {{-- --- INICIO CAMBIO LOGO --- --}}
             <a href="/" class="flex items-center gap-3">
-                <div class="w-10 h-10 bg-sky-200 text-sky-700 flex items-center justify-center rounded-full">
-                    <i class="fas fa-water"></i>
-                </div>
                 <h1 class="text-2xl font-bold text-sky-800">Maxima</h1>
             </a>
+            {{-- --- FIN CAMBIO LOGO --- --}}
         </div>
 
         {{-- Tarjeta de login con estilo del panel --}}

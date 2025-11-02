@@ -1,5 +1,5 @@
 <div x-show="pestañaActiva === 'Ventas'" class="bg-sky-50 p-6 rounded-lg shadow-xl max-w-7xl mx-auto">
-    <h2 class="text-xl font-bold mb-4">Registro de Ventas Recientes</h2>
+    <h2 class="text-xl font-bold mb-4">Registro de Ventas</h2>
     <div class="overflow-x-auto">
         <table class="w-full text-sm">
             <thead class="text-xs uppercase bg-sky-100"> 
@@ -47,10 +47,10 @@
             {{-- --- INICIO REVERSIÓN (Volvemos al footer original) --- --}}
             <tfoot class="bg-sky-100 border-t-2 border-sky-200">
                 <tr class="font-semibold text-sm">
-                    <td class="px-6 py-4 text-right" colspan="2">Total de Ventas (Recientes):</td>
+                    <td class="px-6 py-4 text-right" colspan="2">Monto total de Ventas:</td>
                     {{-- Columna para el Monto Total --}}
                     <td class="px-6 py-4 font-bold" x-text="`$${parseFloat(ventasTotalAmount).toFixed(2)}`"></td>
-                    <td class="px-6 py-4 text-right">Total Items:</td>
+                    <td class="px-6 py-4 text-right">Total Ventas:</td>
                     {{-- Columna para el Count Total --}}
                     <td class="px-6 py-4 font-bold" x-text="ventasTotalCount"></td>
                     <td class="px-6 py-4"></td> {{-- Columna de acciones vacía --}}

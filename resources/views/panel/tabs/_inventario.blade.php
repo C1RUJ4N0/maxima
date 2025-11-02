@@ -82,7 +82,7 @@
                 <div class="grid grid-cols-3 gap-2 mt-2">
                     <button @click="metodoPago = 'efectivo'" :class="{'bg-sky-600 text-white': metodoPago === 'efectivo', 'bg-sky-100 text-sky-700 hover:bg-sky-200': metodoPago !== 'efectivo'}" class="p-2 rounded-lg text-sm transition-colors">Efectivo</button>
                     <button @click="metodoPago = 'tarjeta'" :class="{'bg-sky-600 text-white': metodoPago === 'tarjeta', 'bg-sky-100 text-sky-700 hover:bg-sky-200': metodoPago !== 'tarjeta'}" class="p-2 rounded-lg text-sm transition-colors">Tarjeta</button>
-                    <button @click="metodoPago = 'transferencia'" :class="{'bg-sky-600 text-white': metodoPago === 'transferencia', 'bg-sky-100 text-sky-700 hover:bg-sky-200': metodoPago !== 'transferencia'}" class="p-2 rounded-lg text-sm transition-colors">Transfer</button>
+                    <button @click="metodoPago = 'transferencia'" :class="{'bg-sky-600 text-white': metodoPago === 'transferencia', 'bg-sky-100 text-sky-700 hover:bg-sky-200': metodoPago !== 'transferencia'}" class="p-2 rounded-lg text-sm transition-colors">Transferencia</button>
                 </div>
             </div>
         </div>
