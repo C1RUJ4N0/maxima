@@ -7,23 +7,23 @@ pipeline {
         AWS_REGION     = 'us-east-1' 
         ECR_REPO_NAME  = 'maxima-app' 
         ECS_CLUSTER    = 'maxima-cluster'     
-        ECS_SERVICE    = 'maxima-app-task-def-service-etjvk2u9' // Tu Service Name
+        ECS_SERVICE    = 'maxima-app-task-def-service-etjvk2u9' 
         TASK_DEF_FAMILY = "maxima-app-task-def"
+        
+        // ID de la Credencial de AWS almacenada en Jenkins.
+        // ¡DEBE COINCIDIR CON EL ID REAL DE TU CREDENCIAL!
+        AWS_CREDENTIALS_ID = '3648b605-1bc3-4b5d-ac56-9b667b91381c' 
         
         // Variables generadas
         IMAGE_TAG      = "${env.BUILD_NUMBER}" 
         ECR_REGISTRY   = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
         ECR_IMAGE_URI  = "${ECR_REGISTRY}/${ECR_REPO_NAME}:${IMAGE_TAG}"
-        
-        // ID de la Credencial de AWS almacenada en Jenkins
-        AWS_CREDENTIALS_ID = '3648b605-1bc3-4b5d-ac56-9b667b91381c' 
     }
 
     stages {
         stage('1. Checkout Code') {
             steps {
                 echo "Código obtenido de GitHub."
-                // El checkout del SCM ocurre automáticamente antes de la etapa 1
             }
         }
         
@@ -36,11 +36,19 @@ pipeline {
 
         stage('3. Push to ECR') {
             steps {
-                // Bloque CRÍTICO: Inyecta las claves de AWS en las variables de entorno
-                withCredentials([aws(credentialsId: AWS_CREDENTIALS_ID, accessKeyVariable: 'AWS_ACCESS_KEY_ID', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY')]) {
+                // Bloque CRÍTICO: Inyecta las claves como variables de entorno (AWS CLI estándar)
+                withCredentials([
+                    [
+                        class: 'com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl',
+                        credentialsId: AWS_CREDENTIALS_ID, 
+                        usernameVariable: 'AWS_ACCESS_KEY_ID', // Mapeado al Access Key ID
+                        passwordVariable: 'AWS_SECRET_ACCESS_KEY' // Mapeado al Secret Access Key
+                    ]
+                ]) {
                     script {
-                        // 1. Obtener token de autenticación de ECR (ahora usa las variables inyectadas)
                         echo "Obteniendo token de autenticación de ECR..."
+                        
+                        // 1. Obtener token de autenticación de ECR (ahora usa las variables inyectadas)
                         def ecrCredentials = sh(
                             script: "aws ecr get-login-password --region ${AWS_REGION}", 
                             returnStdout: true
@@ -60,12 +68,18 @@ pipeline {
 
         stage('4. Deploy to ECS') {
             steps {
-                // El despliegue también requiere las credenciales
-                withCredentials([aws(credentialsId: AWS_CREDENTIALS_ID, accessKeyVariable: 'AWS_ACCESS_KEY_ID', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY')]) {
+                // Volvemos a inyectar las credenciales para el despliegue de ECS
+                withCredentials([
+                    [
+                        class: 'com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl',
+                        credentialsId: AWS_CREDENTIALS_ID, 
+                        usernameVariable: 'AWS_ACCESS_KEY_ID', 
+                        passwordVariable: 'AWS_SECRET_ACCESS_KEY'
+                    ]
+                ]) {
                     script {
                         // A. Reemplazar la imagen en el JSON con el nuevo tag
                         echo "Actualizando task-definition.json con el nuevo tag: ${IMAGE_TAG}"
-                        // Comando para cambiar la etiqueta 'latest' por el número de build
                         sh "sed -i '' 's|${ECR_REPO_NAME}:latest|${ECR_REPO_NAME}:${IMAGE_TAG}|g' task-definition.json"
 
                         // B. Registrar la nueva revisión de la definición de tarea
@@ -87,7 +101,7 @@ pipeline {
     
     post {
         always {
-            // Intentará limpiar la imagen local, solo si se construyó.
+            // Limpieza: Elimina la imagen local
             sh "docker rmi ${ECR_REPO_NAME}:${IMAGE_TAG}"
         }
     }
