@@ -68,8 +68,8 @@ pipeline {
                     script {
                         echo "Actualizando y limpiando task-definition.json..."
                         
-                        // SOLUCIÓN DEFINITIVA: Limpieza de BOM, reemplazo de Tag y limpieza de CR (\r)
-                        sh "sed -i -e '1s/^\xEF\xBB\xBF//' -e 's|${ECR_REPO_NAME}:latest|${ECR_REPO_NAME}:${IMAGE_TAG}|g' -e 's/\r\$//g' task-definition.json"
+                        // SOLUCIÓN DEFINITIVA: Doble escape (\\) para \x y escape (\$) para $
+                        sh "sed -i -e '1s/^\\xEF\\xBB\\xBF//' -e 's|${ECR_REPO_NAME}:latest|${ECR_REPO_NAME}:${IMAGE_TAG}|g' -e 's/\r\$//g' task-definition.json"
 
                         // B. Registrar la nueva revisión de la definición de tarea
                         echo "Registrando nueva revisión de tarea..."
