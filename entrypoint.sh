@@ -4,16 +4,16 @@
 cd /var/www/html
 
 # Optimiza la configuración de Laravel
-# (Esto lee las variables de entorno de RDS del task-definition.json)
 php artisan config:cache
 php artisan route:cache
 php artisan view:cache
 
-# Ejecuta las migraciones y los seeders
-# (El --force es necesario para producción)
-echo "Ejecutando migraciones y seeders..."
-php artisan migrate --seed --force
+# ¡SOLUCIÓN!
+# migrate:fresh BORRA todas las tablas y ejecuta migraciones + seeders
+# Esto soluciona el error 'Duplicate entry'
+echo "Borrando, migrando y sembrando la base de datos..."
+php artisan migrate:fresh --seed --force
 
-
+# Inicia el proceso principal (PHP-FPM)
 echo "Iniciando PHP-FPM..."
 exec php-fpm
