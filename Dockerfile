@@ -21,7 +21,8 @@ RUN apk add --no-cache \
     freetype-dev \
     libxml2-dev \
     oniguruma-dev \
-    fcgi
+    fcgi \
+    sed # <-- ¡AÑADIDO SED PARA LIMPIEZA!
 
 # Instalar extensiones de PHP
 RUN docker-php-ext-install pdo pdo_mysql mbstring exif pcntl bcmath gd zip dom xml
@@ -35,8 +36,13 @@ COPY . .
 COPY --from=vendor /app/vendor/ /var/www/html/vendor/
 
 # --- ¡NUEVOS PASOS! ---
-# Copia el script de entrypoint y dale permisos de ejecución
+# Copia el script de entrypoint
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
+
+# ¡SOLUCIÓN! Limpia el script de los caracteres de Windows
+RUN sed -i 's/\r$//g' /usr/local/bin/entrypoint.sh
+
+# Dale permisos de ejecución
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
 # Configurar permisos
@@ -46,5 +52,5 @@ RUN chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 EXPOSE 9000
 
 # --- ¡CAMBIO FINAL! ---
-# Usa el script como punto de entrada en lugar de iniciar php-fpm directamente
+# Usa el script como punto de entrada
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
