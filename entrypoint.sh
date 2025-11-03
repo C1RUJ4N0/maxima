@@ -14,6 +14,6 @@ php artisan view:cache
 echo "Ejecutando migraciones y seeders..."
 php artisan migrate --seed --force
 
-# Inicia el proceso principal (PHP-FPM)
+
 echo "Iniciando PHP-FPM..."
 exec php-fpm
