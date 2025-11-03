@@ -3,14 +3,8 @@ FROM composer:2.7 as vendor
 WORKDIR /app
 COPY database/ database/
 COPY composer.json composer.lock ./
-
-# --- ARREGLO: Instalar la extensión bcmath que falta ---
 RUN docker-php-ext-install bcmath
-
-# --no-scripts evita el error de "artisan not found"
 RUN composer install --no-interaction --no-dev --optimize-autoloader --no-scripts
-
-# --- ARREGLO 2: ELIMINAMOS EL "STAGE 2" DE NODE/VITE PORQUE NO SE USA ---
 
 # Stage 3: Crear la imagen final de PHP-FPM
 FROM php:8.3-fpm-alpine
@@ -27,9 +21,9 @@ RUN apk add --no-cache \
     freetype-dev \
     libxml2-dev \
     oniguruma-dev \
-    fcgi # <-- ESTA ES LA CORRECCIÓN (era fcgi-bin)
+    fcgi
 
-# Instalar extensiones de PHP (bcmath también se necesita aquí)
+# Instalar extensiones de PHP
 RUN docker-php-ext-install pdo pdo_mysql mbstring exif pcntl bcmath gd zip dom xml
 
 WORKDIR /var/www/html
@@ -37,12 +31,20 @@ WORKDIR /var/www/html
 # Copiar archivos de la aplicación
 COPY . .
 
-# Copiar dependencias de Composer desde el stage anterior
+# Copiar dependencias de Composer
 COPY --from=vendor /app/vendor/ /var/www/html/vendor/
+
+# --- ¡NUEVOS PASOS! ---
+# Copia el script de entrypoint y dale permisos de ejecución
+COPY entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
 
 # Configurar permisos
 RUN chown -R www-data:www-data /var/www/html
 RUN chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
 EXPOSE 9000
-CMD ["php-fpm"]
+
+# --- ¡CAMBIO FINAL! ---
+# Usa el script como punto de entrada en lugar de iniciar php-fpm directamente
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
